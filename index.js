@@ -972,12 +972,18 @@ app.post('/api/ai/generate-report/:internId', authenticateToken, requireAdmin, a
         const newReport = await prisma.aiReport.create({
             data: {
                 internId: internId,
-                overallScore: analysisResult.overallScore,
-                strengths: analysisResult.strengths,
-                weaknesses: analysisResult.weaknesses,
-                suggestions: analysisResult.mentorSuggestions,
-                adminSummary: analysisResult.adminSummary,
-                rawJson: analysisResult // Orijinal JSON'u da saklıyoruz (Audit için)
+                overallScore: analysisResult.overallScore || 70,
+                strengths: analysisResult.strengths || [],
+                weaknesses: analysisResult.weaknesses || [],
+                suggestions: analysisResult.suggestions || [],
+                adminSummary: analysisResult.adminSummary || 'Analiz tamamlandı.',
+                // 🆕 ZORUNLU ALANLAR - Eksikse default değer
+                internSummary: analysisResult.internSummary || analysisResult.adminSummary || 'İyi gidiyorsun!',
+                internFeedback: analysisResult.internFeedback || 'Gelişmeye devam et.',
+                learningResources: analysisResult.learningResources || [],
+                nextSteps: analysisResult.nextSteps || [],
+                encouragementQuote: analysisResult.encouragementQuote || 'Harika iş çıkarıyorsun!',
+                rawJson: analysisResult
             }
         });
 
@@ -1060,21 +1066,18 @@ app.post('/api/ai/generate-report/:internId', authenticateToken, requireAdmin, a
         const newReport = await prisma.aiReport.create({
             data: {
                 internId: internId,
-                // Ortak
-                overallScore: analysis.overallScore,
-                strengths: analysis.strengths || [],
-                suggestions: analysis.suggestions || [],
-                // Admin özel
-                weaknesses: analysis.weaknesses || [],
-                adminSummary: analysis.adminSummary || '',
-                // 🆕 Mentörlük alanları
-                internSummary: analysis.internSummary || '',
-                internFeedback: analysis.internFeedback || '',
-                learningResources: analysis.learningResources || [],
-                nextSteps: analysis.nextSteps || [],
-                encouragementQuote: analysis.encouragementQuote || null,
-                // Audit
-                rawJson: analysis
+                overallScore: analysisResult.overallScore || 70,
+                strengths: analysisResult.strengths || [],
+                weaknesses: analysisResult.weaknesses || [],
+                suggestions: analysisResult.suggestions || [],
+                adminSummary: analysisResult.adminSummary || 'Analiz tamamlandı.',
+                // 🆕 ZORUNLU ALANLAR - Eksikse default değer
+                internSummary: analysisResult.internSummary || analysisResult.adminSummary || 'İyi gidiyorsun!',
+                internFeedback: analysisResult.internFeedback || 'Gelişmeye devam et.',
+                learningResources: analysisResult.learningResources || [],
+                nextSteps: analysisResult.nextSteps || [],
+                encouragementQuote: analysisResult.encouragementQuote || 'Harika iş çıkarıyorsun!',
+                rawJson: analysisResult
             }
         });
 
