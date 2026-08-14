@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+/* ==========================================
+   🎨 STAJYEROS TASARIM SİSTEMİ
+   ========================================== */
+@theme {
+  /* Marka Paleti */
+  --color-brand: #a01e27;        /* Ana kırmızı */
+  --color-brand-light: #c8323c;  /* Hover durumu */
+  --color-brand-dark: #7c161e;   /* Basılı durum */
+  --color-night: #121212;        /* Sayfa arka planı */
+  --color-panel: #1f1f1f;        /* Kart / sidebar */
+  --color-edge: #2c2c2c;         /* Kenarlıklar */
+  --color-snow: #ffffff;         /* Metin */
+}
+
+body {
+  @apply bg-night text-snow antialiased;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Koyu tema scrollbar (marka dokunuşu) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #121212; }
+::-webkit-scrollbar-thumb { background: #2c2c2c; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #a01e27; }
+
+/* ==========================================
+   🧱 TEKRAR KULLANILAN BİLEŞENLER
+   ========================================== */
+@layer components {
+  .card {
+    @apply bg-panel border border-white/5 rounded-xl p-5;
+  }
+  .btn-brand {
+    @apply bg-brand hover:bg-brand-light active:bg-brand-dark text-white font-semibold rounded-lg px-4 py-2.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .input-dark {
+    @apply w-full bg-night border border-white/10 rounded-lg px-4 py-2.5 text-snow placeholder:text-white/30 focus:border-brand focus:outline-none transition-colors;
+  }
+  .label-dark {
+    @apply block text-sm text-white/60 mb-1.5;
+  }
+  .stat-value {
+    @apply text-3xl font-bold;
+  }
+}

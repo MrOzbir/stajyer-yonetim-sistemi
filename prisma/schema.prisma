@@ -29,18 +29,27 @@ model User {
   role      Role     @default(INTERN)
   createdAt DateTime @default(now())
   
+  // 🆕 SOFT DELETE (Stajyer Arşivleme)
+  isArchived    Boolean   @default(false)  // Arşivlendi mi?
+  archivedAt    DateTime?                  // Ne zaman arşivlendi?
+
   // Mevcut İlişkiler
-  profile       InternProfile?
   tasksGiven    Task[]  @relation("AdminTasks")
   tasksReceived Task[]  @relation("InternTasks")
 
-  // YENİ: Log, Arşiv ve Mesajlaşma İlişkileri
+  // Log, Arşiv ve Mesajlaşma İlişkileri
   logs             DailyLog[]     @relation("InternLogs")
   archives         DailyArchive[] @relation("InternArchives")
   sentMessages     Message[]      @relation("SentMessages")
   receivedMessages Message[]      @relation("ReceivedMessages")
 
   aiReports      AiReport[]     @relation("InternAiReports")
+  internProfile InternProfile?
+
+  // DEPARTMAN İLİŞKİSİ
+  departmentId  Int?                          // Opsiyonel (nullable)
+  department    Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
 }
 
 // 2. STAJYER PROFİLİ TABLOSU
@@ -92,7 +101,7 @@ model DailyArchive {
   intern    User     @relation("InternArchives", fields: [internId], references: [id], onDelete: Cascade)
 }
 
-// 6. MESAJLAŞMA TABLOSU (YENİ)
+// 6. MESAJLAŞMA TABLOSU
 model Message {
   id          Int      @id @default(autoincrement())
   content     String   @db.Text
@@ -105,20 +114,44 @@ model Message {
   receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
 }
 
-// YENİ TABLO: AI Raporları
+// 7. AI Raporları
 model AiReport {
   id             Int      @id @default(autoincrement())
   internId       Int
   reportDate     DateTime @default(now())
   
-  // AI Analiz Sonuçları
-  overallScore   Int      // 0-100 arası performans puanı
-  strengths      String[] // Güçlü yönler (PostgreSQL Array)
-  weaknesses     String[] // Geliştirilmesi gereken alanlar
-  suggestions    String[] // Mentör tavsiyeleri
-  adminSummary   String   @db.Text // Admin paneli için özet metin
-  rawJson        Json     // Gemini'den dönen orijinal JSON (Debug/Audit için)
+  // ORTAK ALANLAR (Admin + Stajyer görür)
+  overallScore   Int      
+  strengths      String[] 
+  
+  // SADECE ADMIN GÖRÜR (Stajyerden gizli)
+  weaknesses     String[] 
+  adminSummary   String   @db.Text
+  
+  // ORTAK ÖNERİLER
+  suggestions    String[] 
+  
+  // 🆕 SADECE STAJYER GÖRÜR (Mentörlük Alanları)
+  internSummary      String   @db.Text   // Motive edici, pozitif özet
+  internFeedback     String   @db.Text   // Geliştirici geri bildirim
+  learningResources  String[] @default([]) // ["React Hooks - MDN", "Clean Code - Kitap"]
+  nextSteps          String[] @default([]) // Somut eylem planı
+  encouragementQuote String?  // Günlük motivasyon sözü
+  
+  // Orijinal JSON (audit)
+  rawJson        Json     
 
-  // İlişki
   intern         User     @relation("InternAiReports", fields: [internId], references: [id], onDelete: Cascade)
+}
+
+// 9. DEPARTMAN MODELİ
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique           // Departman adı (benzersiz)
+  description String?  @db.Text          // Opsiyonel açıklama
+  color       String   @default("#0084ff") // UI'da kullanılacak renk kodu
+  createdAt   DateTime @default(now())
+
+  // 🔄 İLİŞKİ: Bu departmana bağlı kullanıcılar
+  members     User[]
 }
