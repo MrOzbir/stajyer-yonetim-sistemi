@@ -1,12 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const taskController = require('../controllers/taskController');
-const { authenticateToken, requireAdmin } = require('../../middleware/auth');
+const { authenticateToken, roleMiddleware } = require('../../middleware/auth');
 
-router.post('/', authenticateToken, requireAdmin, taskController.createTask);
-router.get('/', authenticateToken, taskController.getTasks);
+// Görev rotaları (Controller fonksiyon adlarıyla %100 uyumlu hale getirildi)
+router.post('/', authenticateToken, roleMiddleware('ADMIN'), taskController.createTask);
+router.get('/', authenticateToken, taskController.getTasks); // DİKKAT: getAllTasks yerine getTasks yapıldı!
 router.get('/urgent', authenticateToken, taskController.getUrgentTasks);
-router.patch('/:id', authenticateToken, taskController.updateTaskStatus);
-router.delete('/:id', authenticateToken, requireAdmin, taskController.deleteTask);
+router.patch('/:id/status', authenticateToken, taskController.updateTaskStatus);
+router.delete('/:id', roleMiddleware('ADMIN'), taskController.deleteTask);
 
 module.exports = router;

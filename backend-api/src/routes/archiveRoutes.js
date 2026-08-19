@@ -1,8 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const archiveController = require('../controllers/archiveController');
-const { authenticateToken, requireAdmin } = require('../../middleware/auth');
+const { authenticateToken, roleMiddleware } = require('../../middleware/auth');
 
-router.post('/', authenticateToken, archiveController.createArchive);
-router.get('/', authenticateToken, requireAdmin, archiveController.getAllArchives);
+// Arşiv rotaları (Fonksiyon isimleri controller ile tamamen eşitlendi)
+router.get('/', authenticateToken, roleMiddleware('ADMIN'), archiveController.getAllArchives);
+router.post('/', authenticateToken, roleMiddleware('ADMIN'), archiveController.createArchive);
+router.delete('/:id', authenticateToken, roleMiddleware('ADMIN'), archiveController.deleteArchive);
+
 module.exports = router;

@@ -1,14 +1,15 @@
 const express = require('express');
 const router = express.Router();
 const departmentController = require('../controllers/departmentController');
-const { authenticateToken, requireAdmin } = require('../../middleware/auth');
+const { authenticateToken, roleMiddleware } = require('../../middleware/auth');
 
-router.post('/', authenticateToken, requireAdmin, departmentController.createDepartment);
+// 🚨 DÜZELTME: requireAdmin yerine roleMiddleware('ADMIN') kullanıldı
+router.post('/', authenticateToken, roleMiddleware('ADMIN'), departmentController.createDepartment);
 router.get('/', authenticateToken, departmentController.getAllDepartments);
-router.patch('/:id', authenticateToken, requireAdmin, departmentController.updateDepartment);
-router.delete('/:id', authenticateToken, requireAdmin, departmentController.deleteDepartment);
+router.patch('/:id', authenticateToken, roleMiddleware('ADMIN'), departmentController.updateDepartment);
+router.delete('/:id', authenticateToken, roleMiddleware('ADMIN'), departmentController.deleteDepartment);
 
 // Kullanıcıya departman atama (Admin yetkisi gerektirir)
-router.patch('/users/:id/department', authenticateToken, requireAdmin, departmentController.assignUserDepartment);
+router.patch('/users/:id/department', authenticateToken, roleMiddleware('ADMIN'), departmentController.assignUserDepartment);
 
 module.exports = router;

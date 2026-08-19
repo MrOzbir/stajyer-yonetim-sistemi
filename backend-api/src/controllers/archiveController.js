@@ -20,3 +20,17 @@ exports.getAllArchives = async (req, res) => {
         res.status(200).json(archives);
     } catch (error) { res.status(500).json({ error: "Arşivler listelenirken hata oluştu." }); }
 };
+
+// 🚀 EKSİK Olan ve Hata Veren Fonksiyon Eklendi:
+exports.deleteArchive = async (req, res) => {
+    try {
+        const archiveId = parseInt(req.params.id);
+        await prisma.dailyArchive.delete({
+            where: { id: archiveId }
+        });
+        res.status(200).json({ message: "Arşiv başarıyla silindi." });
+    } catch (error) {
+        console.error("🚨 ARŞİV SİLME HATASI:", error);
+        res.status(500).json({ error: "Arşiv silinirken bir hata oluştu." });
+    }
+};

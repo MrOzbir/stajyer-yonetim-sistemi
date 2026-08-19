@@ -78,3 +78,15 @@ exports.restoreIntern = async (req, res) => {
         res.status(statusCode).json({ error: error.message || "Geri yükleme hatası." });
     }
 };
+
+exports.deleteIntern = async (req, res) => {
+    try {
+        const internId = parseInt(req.params.id);
+        await internService.deleteIntern(internId);
+
+        res.status(200).json({ message: "Stajyer kalıcı olarak silindi." });
+    } catch (error) {
+        console.error("🚨 STAJYER SİLME HATASI:", error);
+        res.status(500).json({ error: error.message || "Silme işlemi başarısız oldu." });
+    }
+};

@@ -9,7 +9,7 @@ const INTERN_INCLUDE = {
     tasksReceived: { orderBy: [{ status: 'asc' }, { deadline: 'asc' }] },
     logs: { orderBy: { loginTime: 'desc' } },
     archives: { orderBy: { date: 'desc' } },
-    aiReports: { orderBy: { reportDate: 'desc' }, take: 1 }
+    aiReports: { orderBy: { reportDate: 'desc' }}
 };
 
 function buildInternStats(intern) {
@@ -124,5 +124,16 @@ exports.restoreIntern = async (internId) => {
 
     return await prisma.user.update({ 
         where: { id: internId }, data: { isArchived: false, archivedAt: null } 
+    });
+};
+
+exports.deleteIntern = async (internId) => {
+    const intern = await prisma.user.findUnique({ where: { id: internId } });
+    if (!intern || intern.role !== 'INTERN') throw new Error("Silinecek stajyer bulunamadı.");
+
+    // Prisma şemanızda "onDelete: Cascade" ayarlıysa bu tek satır,
+    // stajyere ait tüm görevleri ve raporları da otomatik temizler!
+    return await prisma.user.delete({
+        where: { id: internId }
     });
 };
