@@ -1,4 +1,6 @@
 const internService = require('../services/internService');
+const prisma = require('../config/database');
+
 
 exports.getUsers = async (req, res) => {
     try {
@@ -33,14 +35,15 @@ exports.getAllInterns = async (req, res) => {
 exports.getInternById = async (req, res) => {
     try {
         const internId = parseInt(req.params.id);
-        const intern = await internService.getInternById(internId);
-        
-        res.status(200).json(intern);
+
+        // 🚨 DÜZELTME: internService.getInternById zaten istatistikleri hesaplayıp gönderiyor!
+        // Bu yüzden ekstra bir işleme (buildInternStats çağırmaya) gerek yok, doğrudan alıyoruz.
+        const internData = await internService.getInternById(internId);
+
+        res.status(200).json({ intern: internData });
     } catch (error) {
-        console.error("🚨 STAJYER DETAY HATASI:", error.message);
-        // Servisten gelen hata mesajına göre dinamik status code gönderiyoruz
-        const statusCode = error.message.includes("bulunamadı") ? 404 : 500;
-        res.status(statusCode).json({ error: error.message || "Stajyer bilgileri alınamadı." });
+        console.error("🚨 STAJYER DETAY HATASI:", error);
+        res.status(500).json({ error: error.message || "Stajyer detayı alınamadı" });
     }
 };
 

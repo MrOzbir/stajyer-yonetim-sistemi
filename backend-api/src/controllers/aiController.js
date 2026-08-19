@@ -29,7 +29,7 @@ exports.generateReport = async (req, res) => {
         if (!internData) return res.status(404).json({ error: "Stajyer bulunamadı." });
 
         const PYTHON_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000/analyze';
-        const aiResponse = await axios.post(PYTHON_SERVICE_URL, internData, { timeout: 45000 });
+        const aiResponse = await axios.post(PYTHON_SERVICE_URL, internData, { timeout: 180000 });
         const analysisResult = aiResponse.data;
 
         const newReport = await prisma.aiReport.create({
@@ -42,7 +42,14 @@ exports.generateReport = async (req, res) => {
                 adminSummary: analysisResult.adminSummary || 'Analiz tamamlandı.',
                 internSummary: analysisResult.internSummary || analysisResult.adminSummary || 'İyi gidiyorsun!',
                 internFeedback: analysisResult.internFeedback || 'Gelişmeye devam et.',
-                learningResources: analysisResult.learningResources || [],
+                
+                // Yapay zeka obje dizisi döndürürse, onları Prisma için düz metne (string) çeviriyoruz
+                learningResources: Array.isArray(analysisResult.learningResources)
+                    ? analysisResult.learningResources.map(item => 
+                        typeof item === 'object' ? `${item.title || 'Kaynak'} - ${item.url || ''}` : String(item)
+                    )
+                    : [],
+                
                 nextSteps: analysisResult.nextSteps || [],
                 encouragementQuote: analysisResult.encouragementQuote || 'Harika iş çıkarıyorsun!',
                 rawJson: analysisResult

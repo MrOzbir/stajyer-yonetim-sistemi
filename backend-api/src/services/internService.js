@@ -2,13 +2,14 @@ const prisma = require('../config/database');
 const { formatToTurkeyTime, formatWorkDuration } = require('../utils/formatters');
 
 // --- YARDIMCI FONKSİYONLAR ---
+// --- YARDIMCI FONKSİYONLAR ---
 const INTERN_INCLUDE = {
     internProfile: true, 
     department: true,
-    tasksReceived: { select: { id: true, status: true, deadline: true } },
-    logs: { select: { loginTime: true, logoutTime: true } },
-    archives: { select: { id: true, date: true } },
-    aiReports: { select: { overallScore: true, reportDate: true, adminSummary: true }, orderBy: { reportDate: 'desc' }, take: 1 }
+    tasksReceived: { orderBy: [{ status: 'asc' }, { deadline: 'asc' }] },
+    logs: { orderBy: { loginTime: 'desc' } },
+    archives: { orderBy: { date: 'desc' } },
+    aiReports: { orderBy: { reportDate: 'desc' }, take: 1 }
 };
 
 function buildInternStats(intern) {
@@ -99,9 +100,11 @@ exports.getInternById = async (internId) => {
     });
 
     if (!intern) throw new Error("Stajyer bulunamadı.");
-    
+
     const { password_hash, ...safeIntern } = intern; 
-    return safeIntern; // Frontend için ham veriyi döndür, detayı controller formatlar.
+
+    // ✅ DÜZELTME BURADA: Ham veriyi buildInternStats süzgecinden geçirip biçimlendirilmiş halini döndürüyoruz
+    return buildInternStats(safeIntern);
 };
 
 exports.archiveIntern = async (internId) => {
