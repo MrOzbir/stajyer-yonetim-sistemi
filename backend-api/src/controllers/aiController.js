@@ -2,8 +2,12 @@ const prisma = require('../config/database');
 const axios = require('axios');
 
 exports.generateReport = async (req, res) => {
-    const internId = parseInt(req.params.internId);
-    try {
+    const internId = parseInt(req.params.id, 10);
+    
+    if (isNaN(internId)) {
+        return res.status(400).json({ error: "Geçersiz stajyer ID formatı." });
+    }
+        try {
         const internData = await prisma.user.findUnique({
             where: { id: internId },
             select: {

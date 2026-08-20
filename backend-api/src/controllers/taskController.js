@@ -63,3 +63,19 @@ exports.deleteTask = async (req, res) => {
         res.status(500).json({ error: "Görev silinirken hata oluştu." });
     }
 };
+
+exports.getTaskById = async (req, res) => {
+    try {
+        const taskId = parseInt(req.params.id);
+        const task = await taskService.getTaskById(taskId); // veya doğrudan prisma sorgusu
+        
+        if (!task) {
+            return res.status(404).json({ error: "Görev bulunamadı." });
+        }
+        
+        res.status(200).json(task);
+    } catch (error) {
+        console.error("🚨 GÖREV DETAY HATASI:", error);
+        res.status(500).json({ error: "Görev getirilirken bir hata oluştu." });
+    }
+};

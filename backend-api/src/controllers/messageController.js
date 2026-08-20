@@ -46,3 +46,86 @@ exports.getChatHistory = async (req, res) => {
         res.status(200).json({ otherUserId: otherId, messages });
     } catch (error) { res.status(500).json({ error: "Geçmiş alınamadı." }); }
 };
+
+// Mesajı Düzenleme (Sadece ilk 30 saniye)
+exports.editMessage = async (req, res) => {
+    try {
+        const messageId = parseInt(req.params.id);
+        const { content } = req.body;
+        const userId = req.user.userId;
+
+        const message = await prisma.message.findUnique({ where: { id: messageId } });
+        if (!message) return res.status(404).json({ error: "Mesaj bulunamadı." });
+
+        // 1. Güvenlik: Kendi mesajı mı?
+        if (message.senderId !== userId) return res.status(403).json({ error: "Sadece kendi mesajlarınızı düzenleyebilirsiniz." });
+
+        // 2. Zaman Kontrolü: 30 saniye geçti mi?
+        const timeDiff = new Date().getTime() - new Date(message.timestamp).getTime();
+        if (timeDiff > 30000) {
+            return res.status(400).json({ error: "Mesajlar sadece gönderildikten sonraki ilk 30 saniye içinde düzenlenebilir." });
+        }
+
+        const updatedMessage = await prisma.message.update({
+            where: { id: messageId },
+            data: { content: content },
+            include: {
+                sender: { select: { id: true, name: true } },
+                receiver: { select: { id: true, name: true } }
+            }
+        });
+
+        const messagePayload = {
+            id: updatedMessage.id,
+            content: updatedMessage.content,
+            timestamp: updatedMessage.timestamp,
+            sender: updatedMessage.sender,
+            receiver: updatedMessage.receiver
+        };
+
+        // Socket.io ile her iki tarafa güncellemeyi canlı yayınla
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`user:${updatedMessage.senderId}`).emit('message_updated', messagePayload);
+            io.to(`user:${updatedMessage.receiverId}`).emit('message_updated', messagePayload);
+        }
+
+        res.status(200).json({ message: "Mesaj düzenlendi!", data: messagePayload });
+    } catch (error) {
+        console.error("🚨 MESAJ DÜZENLEME HATASI:", error);
+        res.status(500).json({ error: "Mesaj düzenlenemedi." });
+    }
+};
+
+// Mesajı Silme (Sadece ilk 30 saniye)
+exports.deleteMessage = async (req, res) => {
+    try {
+        const messageId = parseInt(req.params.id);
+        const userId = req.user.userId;
+
+        const message = await prisma.message.findUnique({ where: { id: messageId } });
+        if (!message) return res.status(404).json({ error: "Mesaj bulunamadı." });
+
+        if (message.senderId !== userId) return res.status(403).json({ error: "Sadece kendi mesajlarınızı silebilirsiniz." });
+
+        const timeDiff = new Date().getTime() - new Date(message.timestamp).getTime();
+        if (timeDiff > 30000) {
+            return res.status(400).json({ error: "Mesajlar sadece gönderildikten sonraki ilk 30 saniye içinde silinebilir." });
+        }
+
+        await prisma.message.delete({ where: { id: messageId } });
+
+        // Socket.io ile her iki tarafa silinme emrini canlı yayınla
+        const io = req.app.get('io');
+        if (io) {
+            const payload = { id: messageId, senderId: message.senderId, receiverId: message.receiverId };
+            io.to(`user:${message.senderId}`).emit('message_deleted', payload);
+            io.to(`user:${message.receiverId}`).emit('message_deleted', payload);
+        }
+
+        res.status(200).json({ message: "Mesaj silindi!" });
+    } catch (error) {
+        console.error("🚨 MESAJ SİLME HATASI:", error);
+        res.status(500).json({ error: "Mesaj silinemedi." });
+    }
+};

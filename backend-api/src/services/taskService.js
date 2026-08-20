@@ -88,3 +88,18 @@ exports.updateTaskStatus = async (taskId, internId, updateData) => {
 exports.deleteTask = async (taskId) => {
     return await prisma.task.delete({ where: { id: taskId } });
 };
+
+exports.getTaskById = async (taskId) => {
+    try {
+        const task = await prisma.task.findUnique({
+            where: { id: taskId },
+            include: {
+                intern: { select: { id: true, name: true, surname: true } }
+            }
+        });
+        return task;
+    } catch (error) {
+        console.error("🚨 SERVİS GÖREV GETİRME HATASI:", error);
+        throw new Error("Görev veritabanından çekilemedi.");
+    }
+};

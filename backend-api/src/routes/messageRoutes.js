@@ -7,3 +7,6 @@ router.post('/', authenticateToken, messageController.sendMessage);
 router.get('/', authenticateToken, messageController.getMessages);
 router.get('/:otherUserId', authenticateToken, messageController.getChatHistory);
 module.exports = router;
+
+router.patch('/:id', authenticateToken, messageController.editMessage);
+router.delete('/:id', authenticateToken, messageController.deleteMessage);

@@ -67,7 +67,12 @@ exports.getUsers = async (queryRole, userRole) => {
 };
 
 exports.getAllInterns = async (showArchived, departmentId, sortBy) => {
-    const whereClause = { role: 'INTERN', isArchived: showArchived };
+
+    const whereClause = { 
+        role: 'INTERN', 
+        isArchived: showArchived ? true : { not: true } 
+    };
+
     if (departmentId) whereClause.departmentId = departmentId;
 
     const interns = await prisma.user.findMany({ 

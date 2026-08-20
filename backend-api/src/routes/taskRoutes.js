@@ -3,11 +3,14 @@ const router = express.Router();
 const taskController = require('../controllers/taskController');
 const { authenticateToken, roleMiddleware } = require('../../middleware/auth');
 
-// Görev rotaları (Controller fonksiyon adlarıyla %100 uyumlu hale getirildi)
 router.post('/', authenticateToken, roleMiddleware('ADMIN'), taskController.createTask);
-router.get('/', authenticateToken, taskController.getTasks); // DİKKAT: getAllTasks yerine getTasks yapıldı!
+router.get('/', authenticateToken, taskController.getTasks);
 router.get('/urgent', authenticateToken, taskController.getUrgentTasks);
-router.patch('/:id/status', authenticateToken, taskController.updateTaskStatus);
-router.delete('/:id', roleMiddleware('ADMIN'), taskController.deleteTask);
+router.get('/:id', authenticateToken, taskController.getTaskById);
+
+// 🚀 DÜZELTME: Doğrudan /:id adresine gelen PATCH isteklerini karşılıyoruz
+router.patch('/:id', authenticateToken, taskController.updateTaskStatus); 
+
+router.delete('/:id', authenticateToken, roleMiddleware('ADMIN'), taskController.deleteTask);
 
 module.exports = router;
