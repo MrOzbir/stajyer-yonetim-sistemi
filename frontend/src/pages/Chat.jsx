@@ -3,8 +3,9 @@ import { useEffect, useState, useRef } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
-import { Send, Circle } from 'lucide-react';
+import { Send, Circle, Pencil, Trash2, X } from 'lucide-react';
 import { io } from 'socket.io-client';
+
 
 export default function Chat() {
     const { user } = useAuth();
@@ -22,6 +23,9 @@ export default function Chat() {
     const typingTimeoutRef = useRef(null);
     const otherTypingTimeoutRef = useRef(null);
 
+    const [editingMessage, setEditingMessage] = useState(null);
+    const [now, setNow] = useState(() => Date.now());
+    
     // Kullanıcıları yükle (Admin → tüm stajyerler, Stajyer → sadece admin)
     useEffect(() => {
         (async () => {
@@ -59,16 +63,19 @@ export default function Chat() {
     useEffect(() => {
         if (!user) return;
 
-        const socket = io('http://localhost:5001', {
-            auth: { token: localStorage.getItem('token') },
-            transports: ['websocket']
-        });
+            const token = localStorage.getItem('token');
+
+            const socket = io('http://localhost:5001', {
+                auth: { token: token },
+                transports: ['polling', 'websocket'], // Önce HTTP (polling) ile başlasın, sonra websocket'e geçsin (Hata riskini sıfırlar)
+                autoConnect: true
+            });
 
         socket.on('new_message', (msg) => {
             // Bu konuşmaya ait mesaj mı?
             const relevant =
-                (msg.sender.id === user.userId && msg.receiver.id === selectedUser?.id) ||
-                (msg.sender.id === selectedUser?.id && msg.receiver.id === user.userId);
+                (msg.sender.id === user.id && msg.receiver.id === selectedUser?.id) ||
+                (msg.sender.id === selectedUser?.id && msg.receiver.id === user.id);
 
             if (relevant) {
                 setMessages((prev) => [...prev, msg]);
@@ -87,23 +94,57 @@ export default function Chat() {
             }
         });
 
+        socket.on('message_updated', (updatedMsg) => {
+            setMessages((prev) => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
+        });
+    
+        socket.on('message_deleted', (data) => {
+            setMessages((prev) => prev.filter(m => m.id !== data.id));
+        });
+
         return () => {
             socket.disconnect();
         };
     }, [user, selectedUser]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     // Otomatik scroll
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
-    const handleSend = () => {
+    const handleSend = async () => {
         if (!newMessage.trim() || !selectedUser) return;
-        sendMessage(selectedUser.id, newMessage.trim());
-        setNewMessage('');
+        
+        // Düzenleme modundaysak API'ye PATCH at, normal gönderimse Socket.io kullan
+        if (editingMessage) {
+            try {
+                await api.patch(`/messages/${editingMessage.id}`, { content: newMessage.trim() });
+                setEditingMessage(null);
+                setNewMessage('');
+            } catch (e) {
+                alert(e.response?.data?.error || "Mesaj düzenlenemedi.");
+            }
+        } else {
+            sendMessage(selectedUser.id, newMessage.trim());
+            setNewMessage('');
+        }
+        
         if (isTyping) {
             sendTyping(selectedUser.id, false);
             setIsTyping(false);
+        }
+    };
+    
+    const handleDeleteMsg = async (msgId) => {
+        try {
+            await api.delete(`/messages/${msgId}`);
+        } catch (e) {
+            alert(e.response?.data?.error || "Mesaj silinemedi.");
         }
     };
 
@@ -213,32 +254,54 @@ export default function Chat() {
                         {/* Mesajlar */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {messages.map((msg) => {
-                                const isMine = msg.sender.id === user.userId;
+                                // Bu senin user.id kullanılarak yapılmış güncel kontrolün
+                                const isMine = msg.sender.id === user.id; 
+                                
+                                // 30 saniye (30.000 ms) kontrolü hesaplanıyor
+                                const timeDiff = now - new Date(msg.timestamp).getTime();
+                                const canEdit = isMine && timeDiff <= 30000;
+
                                 return (
-                                    <div
-                                        key={msg.id}
-                                        className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}
-                                    >
-                                        <div
-                                            className={`max-w-md px-4 py-2 rounded-2xl ${
-                                                isMine
-                                                    ? 'bg-brand text-white rounded-br-sm'
-                                                    : 'bg-panel text-white rounded-bl-sm'
-                                            }`}
-                                        >
+                                    <div key={msg.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
+                                        <div className={`max-w-md px-4 py-2 rounded-2xl ${isMine ? 'bg-brand text-white rounded-br-sm' : 'bg-panel text-white rounded-bl-sm'}`}>
                                             <p className="text-sm">{msg.content}</p>
                                             <div className={`text-xs mt-1 ${isMine ? 'text-white/60' : 'text-white/40'}`}>
-                                                {new Date(msg.timestamp).toLocaleTimeString('tr-TR', {
-                                                    hour: '2-digit',
-                                                    minute: '2-digit'
-                                                })}
+                                                {new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
+
+                                        {/* Düzenle / Sil Butonları - Sadece koşul uyuyorsa görünür */}
+                                        {canEdit && (
+                                            <div className="flex gap-3 mt-1 mr-1 text-[10px] text-white/40">
+                                                <button 
+                                                    onClick={() => { setEditingMessage(msg); setNewMessage(msg.content); }}
+                                                    className="hover:text-brand-light flex items-center gap-1 transition-colors"
+                                                >
+                                                    <Pencil size={10} /> Düzenle
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleDeleteMsg(msg.id)}
+                                                    className="hover:text-red-400 flex items-center gap-1 transition-colors"
+                                                >
+                                                    <Trash2 size={10} /> Sil
+                                                </button>
+                                            </div>
+                                        )}
                                     </div>
                                 );
                             })}
                             <div ref={messagesEndRef} />
                         </div>
+
+                        {/* Düzenleme Modu Göstergesi */}
+                        {editingMessage && (
+                            <div className="px-4 py-2 bg-brand/20 text-brand-light text-xs flex justify-between items-center border-t border-white/5">
+                                <span>Mesaj düzenleniyor...</span>
+                                <button onClick={() => { setEditingMessage(null); setNewMessage(''); }} className="hover:text-white transition-colors">
+                                    <X size={14} />
+                                </button>
+                            </div>
+                        )}
 
                         {/* Input */}
                         <div className="p-4 border-t border-white/5 bg-panel">

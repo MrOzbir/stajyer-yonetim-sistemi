@@ -1,5 +1,22 @@
-node_modules
-# Keep environment variables out of version control
+# Genel ve Sistem Dosyaları
 .env
+.env.*
+.DS_Store [cite: 3911]
+**/.DS_Store [cite: 3911]
 
-/generated/prisma
+# Node.js Bağımlılıkları
+node_modules/ [cite: 3488]
+backend-api/node_modules/ [cite: 3488]
+frontend/node_modules/ [cite: 3488]
+generated/
+
+# Python ve Sanal Ortamlar
+__pycache__/ [cite: 3488]
+ai-service/venv/ [cite: 3488]
+ai-service/.venv/ [cite: 3488]
+
+# AI Assistant ve IDE Dosyaları
+.windsurf/ [cite: 3540]
+.claude/ [cite: 3540]
+.agents/ [cite: 3540]
+skills-lock.json [cite: 3540]

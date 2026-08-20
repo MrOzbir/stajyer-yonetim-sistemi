@@ -1,12 +1,15 @@
+import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
-import { Archive, RotateCcw, Users, ArchiveRestore } from 'lucide-react';
+import { Archive, RotateCcw, Users, ArchiveRestore, Bot, Trash2 } from 'lucide-react';
 
 export default function Interns() {
     const [interns, setInterns] = useState([]);
     const [archived, setArchived] = useState([]);
     const [view, setView] = useState('active');
     const [loading, setLoading] = useState(true);
+    const [isGenerating, setIsGenerating] = useState(null); // 🆕 AI rapor oluşturulurken hangi stajyer ID'si
+    const navigate = useNavigate();
 
     // 🎯 showSpinner=true → sadece butonlardan çağrılınca spinner aç
     const load = useCallback(async (showSpinner = false) => {
@@ -16,12 +19,19 @@ export default function Interns() {
                 api.get('/interns'),
                 api.get('/interns?archived=true'),
             ]);
-            setInterns(activeRes.data.interns || []);
-            setArchived(archivedRes.data.interns || []);
+            
+            console.log("💡 BACKEND'DEN GELEN AKTİF LİSTE:", activeRes.data);
+
+            // Matruşka ihtimaline karşı güvenli veri okuma
+            const activeList = activeRes.data.interns || activeRes.data.data || activeRes.data;
+            const archivedList = archivedRes.data.interns || archivedRes.data.data || archivedRes.data;
+
+            setInterns(Array.isArray(activeList) ? activeList : []);
+            setArchived(Array.isArray(archivedList) ? archivedList : []);
         } catch (e) {
             console.error('Stajyerler yüklenemedi:', e);
         } finally {
-            setLoading(false);   // ✅ await'den sonra → asenkron, kurala uygun
+            setLoading(false);
         }
     }, []);
 
@@ -49,6 +59,45 @@ export default function Interns() {
             load(true);   // 🔄
         } catch (e) {
             alert(e.response?.data?.error || 'Geri yükleme başarısız');
+        }
+    };
+
+    const handleDelete = async (intern) => {
+        // Kalıcı silme olduğu için ekstra dikkat çekici bir uyarı koyuyoruz
+        if (!window.confirm(`⚠️ DİKKAT: ${intern.name} ${intern.surname} sistemden KALICI olarak silinecek. Tüm görevleri, raporları ve logları da yok olacak.\n\nBu işlem GERİ ALINAMAZ! Onaylıyor musunuz?`)) return;
+        
+        try {
+            await api.delete(`/interns/${intern.id}`);
+            load(true); // Listeyi yenile
+        } catch (e) {
+            alert(e.response?.data?.error || 'Silme işlemi başarısız');
+        }
+    };
+
+    // 🤖 AI RAPOR OLUŞTUR
+    const generateAiReport = async (intern) => {
+
+        console.log("🚨 TIKLANAN STAJYER BÜTÜN OBJESİ:", intern);
+        // Görev kontrolü
+        if (!intern.tasks || intern.tasks.total === 0) {
+            alert(`❌ ${intern.name} ${intern.surname} adlı stajyere henüz hiç görev atanmamış, görev atanmamış stajyerin AI raporu.`);
+            return;
+        }
+
+        if (!window.confirm(`${intern.name} ${intern.surname} için AI raporu oluşturulsun mu? (1-2 dakika sürebilir)`)) return;
+        
+        setIsGenerating(intern.id);
+        try {
+            // Backend'e istek atıyoruz (Python servisi uzun sürebilir)
+            await api.post(`/ai/generate-report/${intern.id}`);
+            await load(false);
+            alert('✅ AI Raporu başarıyla oluşturuldu!');
+        } catch (e) {
+            console.error("AI Rapor Hatası:", e);
+            alert('❌ Rapor oluşturulamadı: ' + (e.response?.data?.error || e.message));
+        } finally {
+            // 🛡️ KRİTİK: Hata olsa bile loader'ı mutlaka kapatır!
+            setIsGenerating(null);
         }
     };
 
@@ -119,7 +168,18 @@ export default function Interns() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                             {list.map((intern) => (
-                                <tr key={intern.id} className="hover:bg-white/[0.03] transition-colors">
+                                <tr 
+                                key={intern.id} 
+                                className="hover:bg-white/[0.03] transition-colors cursor-pointer"
+                                onClick={(e) => {
+                                    // 🚨 KESİN KORUMA: Eğer tıklanan yer bir buton veya butonun içindeki bir ikon ise yönlendirmeyi iptal et!
+                                    if (e.target.closest('button')) return;
+                                    
+                                    // Sadece boşluğa tıklandıysa detay sayfasına git
+                                    navigate(`/admin/interns/${intern.id}`);
+                                }}
+                                >
+                                    
                                     {/* Stajyer */}
                                     <td className="px-5 py-4">
                                         <div className="flex items-center gap-3">
@@ -142,6 +202,7 @@ export default function Interns() {
                                             </div>
                                         </div>
                                     </td>
+                                
 
                                     {/* Departman */}
                                     <td className="px-5 py-4">
@@ -208,23 +269,73 @@ export default function Interns() {
 
                                     {/* İşlemler */}
                                     <td className="px-5 py-4 text-right">
-                                        {view === 'active' ? (
-                                            <button
-                                                onClick={() => handleArchive(intern)}
-                                                title="Arşivle"
-                                                className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
-                                            >
-                                                <Archive size={18} />
-                                            </button>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleRestore(intern)}
-                                                title="Geri Yükle"
-                                                className="text-white/40 hover:text-green-400 transition-colors cursor-pointer"
-                                            >
-                                                <RotateCcw size={18} />
-                                            </button>
-                                        )}
+                                        <div className="flex items-center justify-end gap-2">
+                                            {/* 🤖 AI RAPOR BUTONU (sadece aktif stajyerler için) */}
+                                            {view === 'active' && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Satıra tıklama olayını engeller
+                                                        generateAiReport(intern);
+                                                    }}
+                                                    disabled={isGenerating === intern.id}
+                                                    title="AI Performans Raporu Oluştur"
+                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                                                        isGenerating === intern.id
+                                                            ? 'bg-purple-600/30 text-purple-300 cursor-wait'
+                                                            : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                    }`}
+                                                >
+                                                    {isGenerating === intern.id ? (
+                                                        <>
+                                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                            Analiz...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Bot size={14} />
+                                                            AI Rapor
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
+
+                                            {/* Arşivle / Geri Yükle */}
+                                            {view === 'active' ? (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Satıra tıklama olayını engeller
+                                                        handleArchive(intern);
+                                                    }}
+                                                    title="Arşivle"
+                                                    className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
+                                                >
+                                                    <Archive size={18} />
+                                                </button>
+                                            ) : (
+                                                <>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation(); // Satıra tıklama olayını engeller
+                                                        handleRestore(intern);
+                                                    }}
+                                                    title="Geri Yükle"
+                                                    className="text-white/40 hover:text-green-400 transition-colors cursor-pointer"
+                                                >
+                                                    <RotateCcw size={18} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleDelete(intern); // 🚨 Silme işlemi
+                                                    }}
+                                                    title="Kalıcı Olarak Sil"
+                                                    className="text-white/40 hover:text-red-500 transition-colors cursor-pointer"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            </>
+                                            )}
+                                        </div>
                                     </td>
                                 </tr>
                             ))}

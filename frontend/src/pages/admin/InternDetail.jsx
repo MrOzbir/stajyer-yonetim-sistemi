@@ -1,0 +1,566 @@
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import api from '../../api/axios';
+import { 
+    ArrowLeft, Bot, Calendar, CheckCircle2, Clock, 
+    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles,  Trash2
+} from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
+export default function InternDetail() {
+    const { id } = useParams();
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const [intern, setIntern] = useState(null);
+    const [reports, setReports] = useState([]);
+    const [activeTab, setActiveTab] = useState('overview');
+    const [loading, setLoading] = useState(true);
+    const [generating, setGenerating] = useState(false);
+    const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
+    const [taskForm, setTaskForm] = useState({ title: '', description: '', repoLink: '', deadline: '' });
+
+    const handleAssignTask = async (e) => {
+        e.preventDefault();
+        try {
+            // Backend'in beklediği verileri gönderiyoruz (internId detay sayfasından gelir)
+            await api.post('/tasks', { 
+                ...taskForm, 
+                internId: parseInt(id) // Veya stajyerin ID'si nereden geliyorsa (intern.id)
+            });
+            
+            setIsTaskModalOpen(false);
+            // handleAssignTask fonksiyonunun içindeki form sıfırlama satırını bulun ve güncelleyin:
+            setTaskForm({ title: '', description: '', repoLink: '', deadline: '' });
+            window.location.reload();
+            alert("✅ Görev başarıyla atandı!");
+        } catch (err) {
+            alert("❌ Görev atanamadı: " + (err.response?.data?.error || err.message));
+        }
+    };
+
+
+    useEffect(() => {
+        const fetchIntern = async () => {
+            try {
+                const res = await api.get(`/interns/${id}`);
+                
+                // 🚀 KESİN ÇÖZÜM: Matruşka bebekleri otomatik açan kod!
+                // Veri nerede saklanıyorsa saklansın, en içteki gerçek stajyer objesini bulur.
+                const actualData = res.data.intern?.intern || res.data.intern || res.data;
+                
+                setIntern(actualData);
+                
+            } catch (error) {
+                console.error('Stajyer detayı alınamadı:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchIntern();
+    }, [id]);
+
+    const generateReport = async () => {
+        if (!window.confirm('Yeni AI raporu oluşturulsun mu? (1-2 dakika)')) return;
+        setGenerating(true);
+        try {
+            await api.post(`/ai/generate-report/${id}`);
+            // Yeniden yükle
+            const reportsRes = await api.get(`/ai/reports/${id}`);
+            setReports(reportsRes.data || []);
+            const internRes = await api.get(`/interns/${id}`);
+            setIntern(internRes.data.intern);
+        } catch (e) {
+            alert('❌ Hata: ' + (e.response?.data?.error || e.message));
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+        // 🗑️ RAPOR SİL
+    const deleteReport = async (reportId) => {
+        if (!window.confirm('Bu rapor kalıcı olarak silinsin mi?')) return;
+        try {
+            await api.delete(`/ai/reports/${reportId}`);
+            setReports((prev) => prev.filter((r) => r.id !== reportId));
+        } catch (e) {
+            alert('❌ Rapor silinemedi: ' + (e.response?.data?.error || e.message));
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="card flex justify-center py-16">
+                <div className="w-8 h-8 border-4 border-brand border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        );
+    }
+
+    if (!intern) return null;
+
+    const latestReport = reports[0];
+    const tabs = [
+        { id: 'overview', label: 'Genel', icon: <TrendingUp size={16} /> },
+        { id: 'tasks', label: 'Görevler', icon: <CheckCircle2 size={16} /> },
+        { id: 'archives', label: 'Günlükler', icon: <BookOpen size={16} /> },
+        { id: 'reports', label: `AI Raporları (${reports.length})`, icon: <Bot size={16} /> }
+    ];
+
+
+    if (!intern) {
+        return (
+            <div className="flex justify-center py-16">
+                <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full"></div>
+            </div>
+        );
+    }
+
+    // Arayüze gelmeden hemen önce verinin tam olarak ne olduğuna bakalım:
+    console.log("💡 EKRANA BASILACAK STAJYER VERİSİ:", intern);
+
+    // Daha önce eklediğimiz yükleme ekranı kontrolü:
+    if (!intern) {
+        return (
+            <div className="flex justify-center py-16">
+                <div className="animate-spin w-8 h-8 border-4 border-brand border-t-transparent rounded-full"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div>
+            {/* Başlık */}
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={() => navigate('/admin/interns')}
+                        className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                    >
+                        <ArrowLeft size={20} />
+                    </button>
+                    <div>
+                        <h1 className="text-2xl font-bold">
+                            {intern.name} {intern.surname}
+                        </h1>
+                        <p className="text-white/40 text-sm">{intern.email}</p>
+                    </div>
+                </div>
+
+                <button
+                    onClick={generateReport}
+                    disabled={generating}
+                    className="btn-brand flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                >
+                    {generating ? (
+                        <>
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            Oluşturuluyor...
+                        </>
+                    ) : (
+                        <>
+                            <Bot size={16} />
+                            Yeni AI Raporu
+                        </>
+                    )}
+                </button>
+            </div>
+
+            {/* 1. EKRANDAKİ BUTON (Başlığın yanına eklenebilir) */}
+            {user?.role === 'ADMIN' && (
+                <button 
+                    onClick={() => setIsTaskModalOpen(true)}
+                    className="bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
+                >
+                    + Yeni Görev Ata
+                </button>
+            )}
+
+            {/* 2. GÖREV ATAMA MODALI (Dosyanın en altına, sayfanın ana div'inin hemen içine koyun) */}
+            {isTaskModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold text-white mb-4">Yeni Görev Ata</h2>
+                        
+                        <form onSubmit={handleAssignTask} className="space-y-4">
+                           {/* 1. GÖREV BAŞLIĞI */}
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Görev Başlığı</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    value={taskForm.title}
+                                    onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    placeholder="Örn: React ile Login sayfası tasarımı"
+                                />
+                            </div>
+
+                            {/* 2. GÖREV İÇERİĞİ / AÇIKLAMASI (YENİ EKLENEN ALAN) */}
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Görev Detayı (İçerik)</label>
+                                <textarea 
+                                    required
+                                    value={taskForm.description}
+                                    onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand min-h-[100px] resize-y"
+                                    placeholder="Görevle ilgili detaylı açıklamaları ve gereksinimleri buraya yazın..."
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Teslim Tarihi</label>
+                                <input 
+                                    type="date" 
+                                    required
+                                    value={taskForm.deadline}
+                                    onChange={(e) => setTaskForm({...taskForm, deadline: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Repo Linki (Opsiyonel)</label>
+                                <input 
+                                    type="url" 
+                                    value={taskForm.repoLink}
+                                    onChange={(e) => setTaskForm({...taskForm, repoLink: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    placeholder="https://github.com/..."
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsTaskModalOpen(false)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg font-semibold transition-colors"
+                                >
+                                    İptal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="flex-1 bg-brand hover:bg-brand-light text-white py-2 rounded-lg font-semibold transition-colors"
+                                >
+                                    Görev Ata
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Sekmeler */}
+            <div className="flex gap-2 mb-6 border-b border-white/10">
+                {tabs.map((tab) => (
+                    <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors cursor-pointer border-b-2 ${
+                            activeTab === tab.id
+                                ? 'border-brand text-brand-light'
+                                : 'border-transparent text-white/60 hover:text-white'
+                        }`}
+                    >
+                        {tab.icon}
+                        {tab.label}
+                    </button>
+                ))}
+            </div>
+
+            {/* Genel Bakış */}
+            {activeTab === 'overview' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="card">
+                        <div className="text-white/40 text-xs mb-1">AI Puanı</div>
+                        <div className="text-3xl font-bold text-brand-light">
+                            {intern.ai?.overallScore || '—'}
+                            <span className="text-sm text-white/30">/100</span>
+                        </div>
+                    </div>
+                    <div className="card">
+                        <div className="text-white/40 text-xs mb-1">Tamamlanan</div>
+                        <div className="text-3xl font-bold">
+                            {intern?.tasks?.completed || 0}
+                            <span className="text-sm text-white/30">/{intern?.tasks?.total || 0}</span>
+                        </div>
+                    </div>
+                    <div className="card">
+                        <div className="text-white/40 text-xs mb-1">Toplam Mesai</div>
+                        <div className="text-2xl font-bold">{intern?.work?.totalWorked || '—'}</div>
+                    </div>
+                    <div className="card">
+                        <div className="text-white/40 text-xs mb-1">Son Giriş</div>
+                        <div className="text-lg font-semibold">{intern?.lastLogin || '—'}</div>
+                    </div>
+
+                    {/* En Son Rapor Özeti */}
+                    {latestReport && (
+                        <div className="card md:col-span-2 lg:col-span-4 bg-gradient-to-br from-purple-900/20 to-brand/10 border-brand/30">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Sparkles className="text-brand-light" size={20} />
+                                <h3 className="font-bold text-lg">Son AI Değerlendirmesi</h3>
+                                <span className="text-xs text-white/40 ml-auto">
+                                    {new Date(latestReport.reportDate).toLocaleDateString('tr-TR')}
+                                </span>
+                            </div>
+                            <p className="text-white/80 mb-4">{latestReport.internSummary}</p>
+                            
+                            {latestReport.strengths?.length > 0 && (
+                                <div className="mb-3">
+                                    <div className="text-xs text-green-400 font-semibold mb-1">💪 Güçlü Yönler</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {latestReport.strengths.map((s, i) => (
+                                            <span key={i} className="px-2 py-1 bg-green-500/20 text-green-300 rounded text-xs">
+                                                {s}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {latestReport.nextSteps?.length > 0 && (
+                                <div>
+                                    <div className="text-xs text-blue-400 font-semibold mb-1">🎯 Sonraki Adımlar</div>
+                                    <ul className="space-y-1">
+                                        {latestReport.nextSteps.slice(0, 3).map((step, i) => (
+                                            <li key={i} className="text-sm text-white/70 flex gap-2">
+                                                <span className="text-blue-400">•</span>
+                                                {step}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* Görevler */}
+            {activeTab === 'tasks' && (
+                <div className="card">
+                    <h3 className="font-bold mb-4">Tüm Görevler</h3>
+                    {intern.tasksReceived?.length > 0 ? (
+                        <div className="space-y-2">
+                            {intern.tasksReceived.map((task) => (
+                                <div key={task.id} className="p-3 bg-night/50 rounded-lg flex items-center justify-between">
+                                    <div>
+                                    <div className="font-semibold flex items-center gap-2">
+                                    {task.repoLink ? (
+                                        <a 
+                                            href={task.repoLink} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="hover:text-brand-light hover:underline"
+                                        >
+                                            {task.title}
+                                            <span className="ml-1 text-xs text-white/40">↗</span>
+                                        </a>
+                                    ) : (
+                                        task.title
+                                    )}
+                                </div>
+                                        {task.deadline && (
+                                            <div className="text-xs text-white/40 mt-1">
+                                                <Clock size={12} className="inline mr-1" />
+                                                Deadline: {new Date(task.deadline).toLocaleDateString('tr-TR')}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                        task.status === 'COMPLETED' ? 'bg-green-500/20 text-green-300' :
+                                        task.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-300' :
+                                        'bg-yellow-500/20 text-yellow-300'
+                                    }`}>
+                                        {task.status}
+                                    </span>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-white/40 text-center py-8">Henüz görev atanmamış.</p>
+                    )}
+                </div>
+            )}
+
+            {/* Günlük Arşivler */}
+            {activeTab === 'archives' && (
+                <div className="space-y-3">
+                    {intern.archives?.length > 0 ? intern.archives.map((archive) => (
+                        <div key={archive.id} className="card">
+                            <div className="flex items-center gap-2 mb-2 text-white/40 text-xs">
+                                <Calendar size={12} />
+                                {new Date(archive.date).toLocaleDateString('tr-TR', {
+                                    day: 'numeric', month: 'long', year: 'numeric'
+                                })}
+                            </div>
+                            <p className="text-white/80 whitespace-pre-wrap">{archive.content}</p>
+                        </div>
+                    )) : (
+                        <div className="card text-center py-8 text-white/40">
+                            Henüz günlük arşiv yok.
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* AI Raporları */}
+            {activeTab === 'reports' && (
+                <div className="space-y-4">
+                    {reports.length === 0 ? (
+                        <div className="card text-center py-12">
+                            <Bot size={48} className="mx-auto mb-4 text-white/20" />
+                            <p className="text-white/40 mb-4">Henüz AI raporu oluşturulmamış.</p>
+                            <button onClick={generateReport} className="btn-brand">
+                                İlk Raporu Oluştur
+                            </button>
+                        </div>
+                    ) : (
+                        reports.map((report) => (
+                            <ReportCard key={report.id} report={report} onDelete={deleteReport} />
+                        ))
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}
+
+// Rapor kartı component'i
+function ReportCard({ report, onDelete }) {
+    const [expanded, setExpanded] = useState(false);
+    
+    const scoreColor = report.overallScore >= 80 ? 'text-green-400' :
+                       report.overallScore >= 60 ? 'text-yellow-400' : 'text-red-400';
+    
+    return (
+        <div className="card">
+            <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setExpanded(!expanded)}
+            >
+                <div className="flex items-center gap-4">
+                    <div className={`text-3xl font-bold ${scoreColor}`}>
+                        {report.overallScore}
+                    </div>
+                    <div>
+                        <div className="font-semibold">
+                            AI Performans Raporu
+                        </div>
+                        <div className="text-xs text-white/40">
+                            {new Date(report.reportDate).toLocaleDateString('tr-TR', {
+                                day: 'numeric', month: 'long', year: 'numeric',
+                                hour: '2-digit', minute: '2-digit'
+                            })}
+                        </div>
+                    </div>
+                </div>
+                
+                {/* 🗑️ SİLME BUTONU + AÇ/KAPA */}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onDelete(report.id); }}
+                        title="Raporu Sil"
+                        className="text-white/40 hover:text-red-400 transition-colors cursor-pointer p-1.5 hover:bg-red-500/10 rounded-lg"
+                    >
+                        <Trash2 size={16} />
+                    </button>
+                    <div className="text-white/40">{expanded ? '▲' : '▼'}</div>
+                </div>
+            </div>
+
+            {expanded && (
+                <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
+                    {/* Özetler */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="p-3 bg-purple-900/20 rounded-lg">
+                            <div className="text-xs text-purple-300 font-semibold mb-2">
+                                👤 Stajyer Özeti
+                            </div>
+                            <p className="text-sm text-white/80">{report.internSummary}</p>
+                        </div>
+                        <div className="p-3 bg-blue-900/20 rounded-lg">
+                            <div className="text-xs text-blue-300 font-semibold mb-2">
+                                👔 Yönetici Özeti
+                            </div>
+                            <p className="text-sm text-white/80">{report.adminSummary}</p>
+                        </div>
+                    </div>
+
+                    {/* Güçlü/Zayıf Yönler */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <div className="text-xs text-green-400 font-semibold mb-2 flex items-center gap-1">
+                                <Award size={14} /> Güçlü Yönler
+                            </div>
+                            <ul className="space-y-1">
+                                {report.strengths?.map((s, i) => (
+                                    <li key={i} className="text-sm text-white/70 flex gap-2">
+                                        <span className="text-green-400">✓</span> {s}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div>
+                            <div className="text-xs text-red-400 font-semibold mb-2 flex items-center gap-1">
+                                <AlertTriangle size={14} /> Gelişim Alanları
+                            </div>
+                            <ul className="space-y-1">
+                                {report.weaknesses?.map((w, i) => (
+                                    <li key={i} className="text-sm text-white/70 flex gap-2">
+                                        <span className="text-red-400">•</span> {w}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+
+                    {/* Öneriler */}
+                    {report.suggestions?.length > 0 && (
+                        <div>
+                            <div className="text-xs text-yellow-400 font-semibold mb-2">💡 Öneriler</div>
+                            <ul className="space-y-1">
+                                {report.suggestions.map((s, i) => (
+                                    <li key={i} className="text-sm text-white/70">• {s}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Öğrenme Kaynakları */}
+                    {report.learningResources?.length > 0 && (
+                        <div>
+                            <div className="text-xs text-blue-400 font-semibold mb-2">📚 Öğrenme Kaynakları</div>
+                            <ul className="space-y-1">
+                                {report.learningResources.map((r, i) => (
+                                    <li key={i} className="text-sm text-white/70">• {r}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+
+                    {/* Sonraki Adımlar */}
+                    {report.nextSteps?.length > 0 && (
+                        <div>
+                            <div className="text-xs text-purple-400 font-semibold mb-2">🎯 Sonraki Adımlar</div>
+                            <ol className="space-y-1 list-decimal list-inside">
+                                {report.nextSteps.map((s, i) => (
+                                    <li key={i} className="text-sm text-white/70">{s}</li>
+                                ))}
+                            </ol>
+                        </div>
+                    )}
+
+                    {/* Motivasyon Sözü */}
+                    {report.encouragementQuote && (
+                        <div className="p-3 bg-brand/10 rounded-lg border border-brand/30">
+                            <div className="text-xs text-brand-light font-semibold mb-1">💬 Motivasyon</div>
+                            <p className="text-sm text-white/80 italic">"{report.encouragementQuote}"</p>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
+}

@@ -45,7 +45,7 @@ export default function Tasks() {
         setUpdatingId(task.id);
         try {
             await api.patch(`/tasks/${task.id}`, { status: newStatus });
-            load(true);
+            load(false);
         } catch (err) {
             alert(err.response?.data?.error || 'Durum güncellenemedi');
         } finally {
@@ -149,29 +149,58 @@ export default function Tasks() {
                                     {task.description || 'Açıklama yok.'}
                                 </p>
 
+
                                 {/* Deadline Bilgisi */}
-                                {task.deadline && (
-                                    <div className="flex items-center gap-2 text-sm mb-4">
-                                        <Clock size={14} className="text-white/40" />
-                                        <span className="text-white/60">Deadline:</span>
-                                        <span className="font-semibold">
-                                            {task.deadlineFormatted}
-                                        </span>
-                                        {task.daysRemaining !== null && (
-                                            <span className={`text-xs px-2 py-0.5 rounded ${
-                                                task.isOverdue 
-                                                    ? 'bg-brand/20 text-brand-light' 
-                                                    : task.daysRemaining <= 2 
-                                                        ? 'bg-orange-500/20 text-orange-400'
-                                                        : 'bg-white/10 text-white/60'
-                                            }`}>
-                                                {task.isOverdue 
-                                                    ? `${Math.abs(task.daysRemaining)} gün gecikmiş`
-                                                    : `${task.daysRemaining} gün kaldı`}
-                                            </span>
-                                        )}
-                                    </div>
-                                )}
+                                {task.deadline && (() => {
+                                    // 1. Kalan günü backend'e güvenmeden React içinde kesin olarak hesaplıyoruz
+                                    const today = new Date();
+                                    const deadlineDate = new Date(task.deadline);
+                                    
+                                    // Sadece günleri karşılaştırmak için saatleri sıfırlayalım (gece yarısı yapalım)
+                                    today.setHours(0, 0, 0, 0);
+                                    deadlineDate.setHours(0, 0, 0, 0);
+                                    
+                                    const diffTime = deadlineDate.getTime() - today.getTime();
+                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                    const isOverdue = diffDays < 0;
+
+                                    return (
+                                        <div className="flex flex-col gap-2 mb-4">
+                                            
+                                            {/* Üst Satır: Sadece Takvim Tarihi */}
+                                            <div className="flex items-center gap-2 text-sm">
+                                                <Clock size={14} className="text-white/40" />
+                                                <span className="text-white/60">Deadline:</span>
+                                                <span className="font-semibold">
+                                                    {deadlineDate.toLocaleDateString('tr-TR')}
+                                                </span>
+                                            </div>
+
+                                            {/* Alt Satır: Kalan/Gecikme Rozeti (Eğer görev tamamlanmadıysa göster) */}
+                                            {task.status !== 'COMPLETED' && (
+                                                <div className="flex items-center">
+                                                    <span className={`text-xs px-2 py-1 rounded font-semibold ${
+                                                        isOverdue 
+                                                            ? 'bg-red-600/35 text-red-400'       // Gecikmişse kesinlikle KIRMIZI
+                                                            : diffDays <= 2 
+                                                                ? 'bg-orange-500/20 text-orange-400' // 2 veya daha az gün kaldıysa TURUNCU
+                                                                : 'bg-blue-500/20 text-blue-300'     // Normal süresi varsa MAVİ
+                                                    }`}>
+                                                        {isOverdue 
+                                                            ? `${Math.abs(diffDays)} gün gecikmiş`
+                                                            : diffDays === 0
+                                                                ? 'Bugün teslim edilecek'
+                                                                : `${diffDays} gün kaldı`
+                                                        }
+                                                    </span>
+                                                </div>
+                                            )}
+                                            
+                                        </div>
+                                    );
+                                })()}
+
+                                
 
                                 {/* Repo Linki */}
                                 <div className="mb-4">

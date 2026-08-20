@@ -10,6 +10,7 @@ import Layout from './components/Layout';
 import Login from './pages/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import InternDashboard from './pages/intern/Dashboard';
+import InternDetail from './pages/admin/InternDetail';
 
 // 🆕 Giriş yapmış kullanıcı /login'e gelirse panele yönlendir
 function LoginRoute() {
@@ -34,6 +35,7 @@ export default function App() {
                             <Route path="interns" element={<Interns />} />
                             <Route path="departments" element={<Departments />} />
                             <Route path="chat" element={<Chat />} />  {/* ✅ ComingSoon yerine */}
+                            <Route path="interns/:id" element={<InternDetail />} />
                         </Route>
                     </Route>
 
