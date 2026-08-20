@@ -2,15 +2,15 @@
 import { useEffect, useState, useRef } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
-import { useSocket } from '../hooks/useSocket';
-import { Send, Circle, Pencil, Trash2, X } from 'lucide-react';
+import { useSocketContext } from '../context/SocketContext';
 import { io } from 'socket.io-client';
+import { Send, Circle, Pencil, Trash2, X } from 'lucide-react';
 
 
 export default function Chat() {
     const { user } = useAuth();
-    const { onlineUsers, connected, sendMessage, sendTyping } = useSocket();
-    
+    const { onlineUsers, connected, sendMessage, sendTyping, unreadCounts, clearUnread } = useSocketContext();
+        
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -117,6 +117,13 @@ export default function Chat() {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
 
+    // Seçili kullanıcı aktif olduğunda veya mesaj geldiğinde okundu yap / bildirimi sıfırla
+    useEffect(() => {
+        if (selectedUser?.id && unreadCounts[selectedUser.id] > 0) {
+            clearUnread(selectedUser.id);
+        }
+    }, [selectedUser, messages, unreadCounts, clearUnread]);
+
     const handleSend = async () => {
         if (!newMessage.trim() || !selectedUser) return;
         
@@ -164,6 +171,11 @@ export default function Chat() {
         }, 2000);
     };
 
+    const handleUserClick = (u) => {
+        setSelectedUser(u);
+        clearUnread(u.id); // Tıklandığı an bildirim sayacı sıfırlanır
+    };
+
     return (
         <div className="flex h-[calc(100vh-8rem)]">
             {/* Sol: Kullanıcı Listesi */}
@@ -192,7 +204,7 @@ export default function Chat() {
                     {users.map((u) => (
                         <button
                             key={u.id}
-                            onClick={() => setSelectedUser(u)}
+                            onClick={() => handleUserClick(u)}
                             className={`w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors cursor-pointer ${
                                 selectedUser?.id === u.id ? 'bg-white/10' : ''
                             }`}
@@ -213,6 +225,12 @@ export default function Chat() {
                                     {onlineUsers.includes(u.id) ? 'Çevrimiçi' : 'Çevrimdışı'}
                                 </div>
                             </div>
+
+                            {unreadCounts[u.id] > 0 && selectedUser?.id !== u.id && (
+                            <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+                                {unreadCounts[u.id]}
+                            </div>
+                        )}
                         </button>
                     ))}
                 </div>

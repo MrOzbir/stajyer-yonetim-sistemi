@@ -4,6 +4,7 @@ import {
     ShieldAlert, LayoutDashboard, Users, Building2,
     MessageSquare, Briefcase, GraduationCap, LogOut
 } from 'lucide-react';
+import { useSocketContext } from '../context/SocketContext';
 
 const adminLinks = [
     { to: '/admin', end: true, label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
@@ -29,6 +30,9 @@ export default function Layout() {
         navigate('/login');
     };
 
+    const { unreadCounts } = useSocketContext();
+    const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+
     return (
         <div className="min-h-screen bg-night">
             {/* Sidebar */}
@@ -48,23 +52,37 @@ export default function Layout() {
 
                 {/* Menü */}
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-                    {links.map((link) => (
-                        <NavLink
-                            key={link.to}
-                            to={link.to}
-                            end={link.end}
-                            className={({ isActive }) =>
-                                `flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm transition-colors ${
-                                    isActive
-                                        ? 'bg-brand/15 text-brand-light border-l-2 border-brand font-semibold'
-                                        : 'text-white/60 hover:bg-white/5 hover:text-white'
-                                }`
-                            }
-                        >
-                            {link.icon}
-                            {link.label}
-                        </NavLink>
-                    ))}
+                    {links.map((link) => {
+                        // Mesajlar sekmesi mi kontrol edelim
+                        const isChatLink = link.to.includes('/chat');
+
+                        return (
+                            <NavLink
+                                key={link.to}
+                                to={link.to}
+                                end={link.end}
+                                className={({ isActive }) =>
+                                    `flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                                        isActive
+                                            ? 'bg-brand/15 text-brand-light border-l-2 border-brand font-semibold'
+                                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                    }`
+                                }
+                            >
+                                <div className="flex items-center gap-3">
+                                    {link.icon}
+                                    <span>{link.label}</span>
+                                </div>
+
+                                {/* 🔴 Eğer bu link Mesajlar ise ve okunmamış varsa rozet göster */}
+                                {isChatLink && totalUnread > 0 && (
+                                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
+                                        {totalUnread}
+                                    </span>
+                                )}
+                            </NavLink>
+                        );
+                    })}
                 </nav>
 
                 {/* Kullanıcı + Çıkış */}

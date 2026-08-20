@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import AdminDashboard from './pages/admin/Dashboard';
 import InternDashboard from './pages/intern/Dashboard';
 import InternDetail from './pages/admin/InternDetail';
+import { SocketProvider } from './context/SocketContext';
 
 // 🆕 Giriş yapmış kullanıcı /login'e gelirse panele yönlendir
 function LoginRoute() {
@@ -21,10 +22,13 @@ function LoginRoute() {
     return <Login />;
 }
 
+
 export default function App() {
     return (
-        <BrowserRouter>
-            <AuthProvider>
+    
+    <AuthProvider>
+        <SocketProvider>
+            <BrowserRouter>
                 <Routes>
                     <Route path="/login" element={<LoginRoute />} />
 
@@ -51,7 +55,8 @@ export default function App() {
 
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
-            </AuthProvider>
-        </BrowserRouter>
+            </BrowserRouter>
+        </SocketProvider>
+    </AuthProvider>
     );
 }
