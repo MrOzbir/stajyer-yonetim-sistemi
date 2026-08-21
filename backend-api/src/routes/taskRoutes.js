@@ -8,9 +8,8 @@ router.get('/', authenticateToken, taskController.getTasks);
 router.get('/urgent', authenticateToken, taskController.getUrgentTasks);
 router.get('/:id', authenticateToken, taskController.getTaskById);
 
-// 🚀 DÜZELTME: Doğrudan /:id adresine gelen PATCH isteklerini karşılıyoruz
 router.patch('/:id', authenticateToken, taskController.updateTaskStatus); 
-
+router.put('/:id', authenticateToken, roleMiddleware('ADMIN'), taskController.updateAdminTask);
 router.delete('/:id', authenticateToken, roleMiddleware('ADMIN'), taskController.deleteTask);
 
 module.exports = router;

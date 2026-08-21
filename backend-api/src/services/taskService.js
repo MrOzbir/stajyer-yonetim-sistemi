@@ -89,6 +89,16 @@ exports.deleteTask = async (taskId) => {
     return await prisma.task.delete({ where: { id: taskId } });
 };
 
+exports.updateAdminTask = async (taskId, taskData) => {
+    const { title, description, deadline } = taskData;
+    let parsedDeadline = deadline ? new Date(deadline) : null;
+
+    return await prisma.task.update({
+        where: { id: taskId },
+        data: { title, description, deadline: parsedDeadline }
+    });
+};
+
 exports.getTaskById = async (taskId) => {
     try {
         const task = await prisma.task.findUnique({

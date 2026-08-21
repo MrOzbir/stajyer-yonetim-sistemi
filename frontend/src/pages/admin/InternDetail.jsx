@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { 
     ArrowLeft, Bot, Calendar, CheckCircle2, Clock, 
-    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles,  Trash2
+    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles, Trash2, Pencil
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -15,9 +15,10 @@ export default function InternDetail() {
     const [reports, setReports] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
-    const [generating, setGenerating] = useState(false);
+    const [generating, setGenerating] = useState(false);    
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [taskForm, setTaskForm] = useState({ title: '', description: '', repoLink: '', deadline: '' });
+    const [editingTask, setEditingTask] = useState(null);
 
     const handleAssignTask = async (e) => {
         e.preventDefault();
@@ -38,25 +39,53 @@ export default function InternDetail() {
         }
     };
 
+    // 🗑️ GÖREV SİL
+    const handleDeleteTask = async (taskId) => {
+        if (!window.confirm("Bu görevi silmek istediğinize emin misiniz?")) return;
+        try {
+            await api.delete(`/tasks/${taskId}`);
+            fetchIntern(); // Sadece veriyi tekrar çekerek listeyi güncelliyoruz
+        } catch (err) {
+            alert("❌ Görev silinemedi: " + (err.response?.data?.error || err.message));
+        }
+    };
 
+    // ✏️ GÖREV DÜZENLE (GÖNDER)
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put(`/tasks/${editingTask.id}`, {
+                title: editingTask.title,
+                description: editingTask.description,
+                deadline: editingTask.deadline
+            });
+            setEditingTask(null); // Modalı/Formu kapatır
+            alert("✅ Görev başarıyla güncellendi!");
+            
+            fetchIntern(); // Listeyi güncelle
+        } catch (err) {
+            alert("❌ Görev güncellenemedi: " + (err.response?.data?.error || err.message));
+        }
+    };
+
+    const fetchIntern = async () => {
+        try {
+            const res = await api.get(`/interns/${id}`);
+            
+            // Veri nerede saklanıyorsa saklansın, en içteki gerçek stajyer objesini bulur.
+            const actualData = res.data.intern?.intern || res.data.intern || res.data;
+            
+            setIntern(actualData);
+            
+        } catch (error) {
+            console.error('Stajyer detayı alınamadı:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Bileşen yüklendiğinde ve id değiştiğinde çalışır
     useEffect(() => {
-        const fetchIntern = async () => {
-            try {
-                const res = await api.get(`/interns/${id}`);
-                
-                // 🚀 KESİN ÇÖZÜM: Matruşka bebekleri otomatik açan kod!
-                // Veri nerede saklanıyorsa saklansın, en içteki gerçek stajyer objesini bulur.
-                const actualData = res.data.intern?.intern || res.data.intern || res.data;
-                
-                setIntern(actualData);
-                
-            } catch (error) {
-                console.error('Stajyer detayı alınamadı:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         fetchIntern();
     }, [id]);
 
@@ -195,7 +224,7 @@ export default function InternDetail() {
                                 />
                             </div>
 
-                            {/* 2. GÖREV İÇERİĞİ / AÇIKLAMASI (YENİ EKLENEN ALAN) */}
+                            {/* 2. GÖREV İÇERİĞİ / AÇIKLAMASI */}
                             <div>
                                 <label className="block text-white/60 text-sm mb-1">Görev Detayı (İçerik)</label>
                                 <textarea 
@@ -212,6 +241,7 @@ export default function InternDetail() {
                                 <input 
                                     type="date" 
                                     required
+                                    min={new Date().toISOString().split('T')[0]}
                                     value={taskForm.deadline}
                                     onChange={(e) => setTaskForm({...taskForm, deadline: e.target.value})}
                                     className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
@@ -343,44 +373,139 @@ export default function InternDetail() {
                     {intern.tasksReceived?.length > 0 ? (
                         <div className="space-y-2">
                             {intern.tasksReceived.map((task) => (
-                                <div key={task.id} className="p-3 bg-night/50 rounded-lg flex items-center justify-between">
-                                    <div>
-                                    <div className="font-semibold flex items-center gap-2">
-                                    {task.repoLink ? (
-                                        <a 
-                                            href={task.repoLink} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
-                                            className="hover:text-brand-light hover:underline"
-                                        >
-                                            {task.title}
-                                            <span className="ml-1 text-xs text-white/40">↗</span>
-                                        </a>
-                                    ) : (
-                                        task.title
-                                    )}
-                                </div>
+                                <div key={task.id} className="p-3 bg-night/50 rounded-lg flex items-center justify-between group">
+                                    
+                                    {/* Sol Kısım: Başlık, Açıklama ve Deadline */}
+                                    <div className="flex-1 pr-4">
+                                        {/* 1. Başlık */}
+                                        <div className="font-semibold flex items-center gap-2">
+                                            {task.repoLink ? (
+                                                <a 
+                                                    href={task.repoLink} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className="hover:text-brand-light hover:underline"
+                                                >
+                                                    {task.title}
+                                                    <span className="ml-1 text-xs text-white/40">↗</span>
+                                                </a>
+                                            ) : (
+                                                task.title
+                                            )}
+                                        </div>
+
+                                        {/* 🚀 2. YENİ EKLENEN KISIM: Görev Açıklaması */}
+                                        {task.description && (
+                                            <p className="text-sm text-white/60 mt-1.5 line-clamp-2">
+                                                {task.description}
+                                            </p>
+                                        )}
+
+                                        {/* 3. Deadline */}
                                         {task.deadline && (
-                                            <div className="text-xs text-white/40 mt-1">
+                                            <div className="text-xs text-white/40 mt-2">
                                                 <Clock size={12} className="inline mr-1" />
                                                 Deadline: {new Date(task.deadline).toLocaleDateString('tr-TR')}
                                             </div>
                                         )}
                                     </div>
-                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+
+                                    {/* Sağ Kısım: Durum Rozeti ve Butonlar flex içinde */}
+                                    <div className="flex items-center gap-3">
+                                    <span className={`px-2 py-1 rounded text-xs font-semibold w-28 text-center inline-block ${
                                         task.status === 'COMPLETED' ? 'bg-green-500/20 text-green-300' :
                                         task.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-300' :
                                         'bg-yellow-500/20 text-yellow-300'
                                     }`}>
                                         {task.status}
                                     </span>
+
+                                        {/* 🚀 ADMIN KONTROLLERİ (Düzenle ve Sil) */}
+                                        {user?.role === 'ADMIN' && (
+                                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
+                                                    title="Düzenle"
+                                                    className="p-1.5 bg-white/5 hover:bg-brand/20 text-white/50 hover:text-brand-light rounded transition-colors cursor-pointer"
+                                                >
+                                                    <Pencil size={14} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                                                    title="Sil"
+                                                    className="p-1.5 bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 rounded transition-colors cursor-pointer"
+                                                >
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </div>
+                                        )}
+                                    </div>
+
                                 </div>
                             ))}
                         </div>
                     ) : (
                         <p className="text-white/40 text-center py-8">Henüz görev atanmamış.</p>
                     )}
+                </div>
+            )}
+
+            {/* 3. GÖREV DÜZENLEME MODALI */}
+            {editingTask && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold text-white mb-4">Görevi Düzenle</h2>
+                        
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Görev Başlığı</label>
+                                <input 
+                                    type="text" 
+                                    required
+                                    value={editingTask.title}
+                                    onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Görev Detayı (İçerik)</label>
+                                <textarea 
+                                    required
+                                    value={editingTask.description || ''}
+                                    onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand min-h-[100px] resize-y"
+                                ></textarea>
+                            </div>
+
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Teslim Tarihi</label>
+                                <input 
+                                    type="date" 
+                                    value={editingTask.deadline ? new Date(editingTask.deadline).toISOString().split('T')[0] : ''}
+                                    onChange={(e) => setEditingTask({...editingTask, deadline: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setEditingTask(null)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg font-semibold transition-colors"
+                                >
+                                    İptal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="flex-1 bg-brand hover:bg-brand-light text-white py-2 rounded-lg font-semibold transition-colors"
+                                >
+                                    Güncelle
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
 
@@ -564,3 +689,4 @@ function ReportCard({ report, onDelete }) {
         </div>
     );
 }
+

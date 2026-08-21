@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
-import { Clock, CheckCircle2, Circle, Play, AlertTriangle, Code, ExternalLink } from 'lucide-react';
-// Aciliyet seviyesine göre renkler ve etiketler
+import { Clock, CheckCircle2, Circle, Play, AlertTriangle, Code, ExternalLink, Trash2, Pencil } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+
 const URGENCY_CONFIG = {
     overdue: { label: 'Süresi Geçmiş', color: 'bg-brand text-white', icon: <AlertTriangle size={14} /> },
     critical: { label: 'Kritik', color: 'bg-brand/20 text-brand-light border border-brand/40', icon: <AlertTriangle size={14} /> },
@@ -22,6 +23,29 @@ export default function Tasks() {
     const [tasks, setTasks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState(null);
+    const [editingTask, setEditingTask] = useState(null);
+    const { user } = useAuth();
+
+    const handleDeleteTask = async (taskId) => {
+        if (!window.confirm("Bu görevi silmek istediğinize emin misiniz?")) return;
+        try {
+            await api.delete(`/tasks/${taskId}`);
+            load(false);
+        } catch (err) {
+            alert("Silme işlemi başarısız: " + err.response?.data?.error);
+        }
+    };
+    
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await api.put(`/tasks/${editingTask.id}`, editingTask);
+            setEditingTask(null);
+            load(false);
+        } catch (err) {
+            alert("Güncelleme başarısız: " + err.response?.data?.error);
+        }
+    };
 
     const load = useCallback(async (showSpinner = false) => {
         if (showSpinner) setLoading(true);
@@ -122,23 +146,67 @@ export default function Tasks() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {tasks.map((task) => {
                         const urgency = URGENCY_CONFIG[task.urgencyLevel || 'none'];
-                        const status = STATUS_CONFIG[task.status];
+                        const status = STATUS_CONFIG[task.status] || STATUS_CONFIG['PENDING'];
                         const isUpdating = updatingId === task.id;
 
                         return (
-                            <div key={task.id} className="card hover:border-white/15 transition-colors">
-                                {/* Üst: Durum + Aciliyet */}
+                            <div key={task.id} className="card hover:border-white/15 transition-colors relative">
+                                
+                                {/* Üst: Durum + Aciliyet + Kontroller */}
                                 <div className="flex items-center justify-between mb-3">
                                     <div className={`flex items-center gap-2 ${status.color}`}>
                                         {status.icon}
                                         <span className="text-sm font-semibold">{status.label}</span>
                                     </div>
-                                    {urgency.icon && (
-                                        <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${urgency.color}`}>
-                                            {urgency.icon}
-                                            {urgency.label}
-                                        </span>
-                                    )}
+                                    
+                                    <div className="flex items-center gap-2">
+                                        {/* Aciliyet Rozeti */}
+                                        {urgency.icon && (
+                                            <span className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${urgency.color}`}>
+                                                {urgency.icon}
+                                                {urgency.label}
+                                            </span>
+                                        )}
+
+                                        {/* YÖNETİCİ KONTROLLERİ (Düzenle ve Sil) */}
+                                        {user?.role === 'ADMIN' && (
+                                            <>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
+                                                    title="Görevi Düzenle"
+                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-brand/20 text-white/50 hover:text-brand-light transition-colors"
+                                                >
+                                                    <Pencil size={12} />
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
+                                                    title="Görevi Sil"
+                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
+                                                >
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {/* Geri Al Butonu (Sağ Üst Köşe) */}
+                                        {(task.status === 'IN_PROGRESS' || task.status === 'COMPLETED') && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStatusUpdate(task, task.status === 'IN_PROGRESS' ? 'PENDING' : 'IN_PROGRESS');
+                                                }}
+                                                disabled={isUpdating}
+                                                title="İşlemi Geri Al"
+                                                className="flex items-center justify-center w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-white/50 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                                            >
+                                                {isUpdating ? (
+                                                    <div className="w-2.5 h-2.5 border-[1.5px] border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                ) : (
+                                                    <span className="text-[10px] leading-none">↩</span>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Başlık */}
@@ -149,14 +217,11 @@ export default function Tasks() {
                                     {task.description || 'Açıklama yok.'}
                                 </p>
 
-
                                 {/* Deadline Bilgisi */}
                                 {task.deadline && (() => {
-                                    // 1. Kalan günü backend'e güvenmeden React içinde kesin olarak hesaplıyoruz
                                     const today = new Date();
                                     const deadlineDate = new Date(task.deadline);
                                     
-                                    // Sadece günleri karşılaştırmak için saatleri sıfırlayalım (gece yarısı yapalım)
                                     today.setHours(0, 0, 0, 0);
                                     deadlineDate.setHours(0, 0, 0, 0);
                                     
@@ -166,8 +231,6 @@ export default function Tasks() {
 
                                     return (
                                         <div className="flex flex-col gap-2 mb-4">
-                                            
-                                            {/* Üst Satır: Sadece Takvim Tarihi */}
                                             <div className="flex items-center gap-2 text-sm">
                                                 <Clock size={14} className="text-white/40" />
                                                 <span className="text-white/60">Deadline:</span>
@@ -175,16 +238,14 @@ export default function Tasks() {
                                                     {deadlineDate.toLocaleDateString('tr-TR')}
                                                 </span>
                                             </div>
-
-                                            {/* Alt Satır: Kalan/Gecikme Rozeti (Eğer görev tamamlanmadıysa göster) */}
                                             {task.status !== 'COMPLETED' && (
                                                 <div className="flex items-center">
                                                     <span className={`text-xs px-2 py-1 rounded font-semibold ${
                                                         isOverdue 
-                                                            ? 'bg-red-600/35 text-red-400'       // Gecikmişse kesinlikle KIRMIZI
+                                                            ? 'bg-red-600/35 text-red-400'
                                                             : diffDays <= 2 
-                                                                ? 'bg-orange-500/20 text-orange-400' // 2 veya daha az gün kaldıysa TURUNCU
-                                                                : 'bg-blue-500/20 text-blue-300'     // Normal süresi varsa MAVİ
+                                                                ? 'bg-orange-500/20 text-orange-400'
+                                                                : 'bg-blue-500/20 text-blue-300'
                                                     }`}>
                                                         {isOverdue 
                                                             ? `${Math.abs(diffDays)} gün gecikmiş`
@@ -195,12 +256,9 @@ export default function Tasks() {
                                                     </span>
                                                 </div>
                                             )}
-                                            
                                         </div>
                                     );
                                 })()}
-
-                                
 
                                 {/* Repo Linki */}
                                 <div className="mb-4">
@@ -209,7 +267,8 @@ export default function Tasks() {
                                             href={task.repoLink}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="flex items-center gap-2 text-sm text-brand-light hover:underline"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="flex items-center gap-2 text-sm text-brand-light hover:underline w-fit"
                                         >
                                             <Code size={14} />
                                             <span className="truncate">{task.repoLink}</span>
@@ -217,7 +276,10 @@ export default function Tasks() {
                                         </a>
                                     ) : (
                                         <button
-                                            onClick={() => handleRepoLink(task)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRepoLink(task);
+                                            }}
                                             disabled={isUpdating}
                                             className="text-sm text-white/40 hover:text-brand-light transition-colors cursor-pointer disabled:opacity-50"
                                         >
@@ -226,28 +288,36 @@ export default function Tasks() {
                                     )}
                                 </div>
 
-                                {/* Durum Güncelleme Butonları */}
-                                <div className="flex gap-2">
+                                {/* ANA İŞLEM BUTONLARI (Alt Kısım) */}
+                                <div className="flex gap-2 mt-auto pt-2">
                                     {task.status === 'PENDING' && (
                                         <button
-                                            onClick={() => handleStatusUpdate(task, 'IN_PROGRESS')}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusUpdate(task, 'IN_PROGRESS');
+                                            }}
                                             disabled={isUpdating}
-                                            className="flex-1 btn-brand text-sm"
+                                            className="flex-1 btn-brand text-sm py-2.5"
                                         >
                                             {isUpdating ? 'Güncelleniyor...' : '▶ Başlat'}
                                         </button>
                                     )}
+
                                     {task.status === 'IN_PROGRESS' && (
                                         <button
-                                            onClick={() => handleStatusUpdate(task, 'COMPLETED')}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleStatusUpdate(task, 'COMPLETED');
+                                            }}
                                             disabled={isUpdating}
-                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-4 py-2.5 transition-colors cursor-pointer disabled:opacity-50"
+                                            className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-2 py-2.5 transition-colors cursor-pointer disabled:opacity-50 text-sm"
                                         >
                                             {isUpdating ? 'Güncelleniyor...' : '✓ Tamamla'}
                                         </button>
                                     )}
+
                                     {task.status === 'COMPLETED' && (
-                                        <div className="flex-1 text-center text-sm text-green-400 font-semibold py-2.5">
+                                        <div className="flex-1 text-center text-sm text-green-400 font-semibold py-2.5 flex items-center justify-center bg-green-500/10 rounded-lg">
                                             ✅ Tamamlandı
                                         </div>
                                     )}
@@ -255,6 +325,46 @@ export default function Tasks() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* GÖREV DÜZENLEME MODALI */}
+            {editingTask && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold text-white mb-4">Görevi Düzenle</h2>
+                        <form onSubmit={handleEditSubmit} className="space-y-4">
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Görev Başlığı</label>
+                                <input 
+                                    type="text" required value={editingTask.title}
+                                    onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Görev Detayı</label>
+                                <textarea 
+                                    required value={editingTask.description || ''}
+                                    onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white min-h-[100px] outline-none focus:border-brand"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-white/60 text-sm mb-1">Teslim Tarihi</label>
+                                <input 
+                                    type="date" 
+                                    value={editingTask.deadline ? new Date(editingTask.deadline).toISOString().split('T')[0] : ''}
+                                    onChange={(e) => setEditingTask({...editingTask, deadline: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                />
+                            </div>
+                            <div className="flex gap-3 mt-6">
+                                <button type="button" onClick={() => setEditingTask(null)} className="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg font-semibold transition-colors">İptal</button>
+                                <button type="submit" className="flex-1 bg-brand hover:bg-brand-light text-white py-2 rounded-lg font-semibold transition-colors">Güncelle</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

@@ -79,3 +79,14 @@ exports.getTaskById = async (req, res) => {
         res.status(500).json({ error: "Görev getirilirken bir hata oluştu." });
     }
 };
+
+exports.updateAdminTask = async (req, res) => {
+    try {
+        const taskId = parseInt(req.params.id);
+        const updatedTask = await taskService.updateAdminTask(taskId, req.body);
+        res.status(200).json({ message: "Görev başarıyla güncellendi!", task: updatedTask });
+    } catch (error) {
+        console.error("🚨 GÖREV DÜZENLEME HATASI:", error);
+        res.status(500).json({ error: "Görev güncellenirken hata oluştu." });
+    }
+};

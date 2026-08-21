@@ -2,7 +2,6 @@ const prisma = require('../config/database');
 const { formatToTurkeyTime, formatWorkDuration } = require('../utils/formatters');
 
 // --- YARDIMCI FONKSİYONLAR ---
-// --- YARDIMCI FONKSİYONLAR ---
 const INTERN_INCLUDE = {
     internProfile: true, 
     department: true,
@@ -47,7 +46,11 @@ function buildInternStats(intern) {
         isArchived: intern.isArchived || false,
         archivedAt: intern.archivedAt ? formatToTurkeyTime(intern.archivedAt) : null,
         profile: intern.internProfile || null, isActiveNow, lastLogin: lastLogin ? formatToTurkeyTime(lastLogin) : null,
+        
         tasks: { total: tasks.length, completed, inProgress, pending, overdue, urgent, completionRate: tasks.length ? Math.round((completed / tasks.length) * 100) : 0 },
+        
+        tasksReceived: tasks,
+        
         work: { totalWorkedMinutes, totalWorked: formatWorkDuration(totalWorkedMinutes), sessionCount: logs.length },
         archives: { total: archives.length, lastArchiveDate: lastArchiveDate ? formatToTurkeyTime(lastArchiveDate) : null },
         ai: latestReport ? { overallScore: latestReport.overallScore, reportDate: latestReport.reportDate, adminSummary: latestReport.adminSummary } : null,
@@ -108,7 +111,7 @@ exports.getInternById = async (internId) => {
 
     const { password_hash, ...safeIntern } = intern; 
 
-    // ✅ DÜZELTME BURADA: Ham veriyi buildInternStats süzgecinden geçirip biçimlendirilmiş halini döndürüyoruz
+    // Ham veriyi buildInternStats süzgecinden geçirip biçimlendirilmiş halini döndürüyoruz
     return buildInternStats(safeIntern);
 };
 
