@@ -5,7 +5,7 @@ const prisma = require('./database');
 function setupSocket(server) {
     const io = new Server(server, {
         cors: {
-            origin: '*', // İleride canlıya alırken Vite/React domain'i ile değiştirebilirsin
+            origin: ['http://localhost:5173', 'http://127.0.0.1:5173', '*'],
             methods: ['GET', 'POST'],
             credentials: true
         },
@@ -14,89 +14,81 @@ function setupSocket(server) {
         allowEIO3: true
     });
 
-    // Online kullanıcıları takip etmek için Map
     const onlineUsers = new Map();
 
-    // Socket.io JWT Authentication Middleware
     io.use((socket, next) => {
         try {
             const token = socket.handshake.auth?.token;
             if (!token) return next(new Error('Authentication token gerekli'));
 
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.userId = decoded.userId;
+            socket.userId = Number(decoded.userId || decoded.id);
             socket.userRole = decoded.role;
             next();
         } catch (error) {
-            next(new Error('Geçersiz veya süresi dolmuş token'));
+            next(new Error('Geçersiz token'));
         }
     });
 
-    // Yeni bağlantı geldiğinde
     io.on('connection', (socket) => {
-        console.log(`🔌 Yeni bağlantı: User ${socket.userId} (${socket.id})`);
         onlineUsers.set(String(socket.userId), socket.id);
         socket.join(`user:${socket.userId}`);
 
-        // Tüm client'lara güncel online listesini yayınla
         io.emit('online_users', {
-            userIds: Array.from(onlineUsers.keys()).map(id => parseInt(id)),
+            userIds: Array.from(onlineUsers.keys()).map((id) => parseInt(id, 10)),
             count: onlineUsers.size
         });
 
-        // Yeni mesaj geldiğinde
         socket.on('send_message', async (data) => {
             try {
                 const { receiverId, content } = data;
+                const targetId = Number(receiverId);
 
-                if (!receiverId || !content || content.trim() === '') {
-                    return socket.emit('error', { message: 'Alıcı ve içerik gerekli' });
-                }
+                if (!targetId || !content || !content.trim()) return;
 
                 const newMessage = await prisma.message.create({
                     data: {
-                        content: content,
+                        content: content.trim(),
                         senderId: socket.userId,
-                        receiverId: parseInt(receiverId)
+                        receiverId: targetId
                     },
                     include: {
-                        sender: { select: { id: true, name: true } },
-                        receiver: { select: { id: true, name: true } }
+                        sender: { select: { id: true, name: true, surname: true } },
+                        receiver: { select: { id: true, name: true, surname: true } }
                     }
                 });
 
-                const messagePayload = {
+                const payload = {
                     id: newMessage.id,
                     content: newMessage.content,
-                    timestamp: newMessage.timestamp,
+                    timestamp: newMessage.timestamp || newMessage.createdAt || new Date(),
+                    senderId: newMessage.senderId,
+                    receiverId: newMessage.receiverId,
                     sender: newMessage.sender,
                     receiver: newMessage.receiver
                 };
 
-                io.to(`user:${socket.userId}`).emit('new_message', messagePayload);
-                io.to(`user:${receiverId}`).emit('new_message', messagePayload);
-                console.log(`💬 Mesaj: ${socket.userId} → ${receiverId}`);
+                io.to(`user:${socket.userId}`).emit('new_message', payload);
+                io.to(`user:${targetId}`).emit('new_message', payload);
             } catch (error) {
                 console.error('🚨 SOCKET MESAJ HATASI:', error);
-                socket.emit('error', { message: 'Mesaj gönderilemedi' });
             }
         });
 
-        // Yazıyor... göstergesi
         socket.on('typing', (data) => {
             const { receiverId, isTyping } = data;
-            socket.to(`user:${receiverId}`).emit('user_typing', {
-                userId: socket.userId,
-                isTyping: isTyping
-            });
+            if (receiverId) {
+                socket.to(`user:${Number(receiverId)}`).emit('user_typing', {
+                    userId: socket.userId,
+                    isTyping: isTyping
+                });
+            }
         });
 
-        // Bağlantı koptuğunda
         socket.on('disconnect', () => {
-            console.log(`❌ Bağlantı koptu: User ${socket.userId}`);
             onlineUsers.delete(String(socket.userId));
             io.emit('online_users', {
-                userIds: Array.from(onlineUsers.keys()).map(id => parseInt(id)),
+                userIds: Array.from(onlineUsers.keys()).map((id) => parseInt(id, 10)),
                 count: onlineUsers.size
             });
         });

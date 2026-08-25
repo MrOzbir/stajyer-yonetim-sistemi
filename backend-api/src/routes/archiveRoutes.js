@@ -5,7 +5,7 @@ const { authenticateToken, roleMiddleware } = require('../../middleware/auth');
 
 // Arşiv rotaları (Fonksiyon isimleri controller ile tamamen eşitlendi)
 router.get('/', authenticateToken, roleMiddleware('ADMIN'), archiveController.getAllArchives);
-router.post('/', authenticateToken, roleMiddleware('ADMIN'), archiveController.createArchive);
+router.post('/', authenticateToken, roleMiddleware('INTERN'), archiveController.createArchive);
 router.delete('/:id', authenticateToken, roleMiddleware('ADMIN'), archiveController.deleteArchive);
 
 module.exports = router;

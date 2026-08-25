@@ -1,36 +1,85 @@
 const prisma = require('../config/database');
+const axios = require('axios');
 
 exports.createArchive = async (req, res) => {
     try {
         const { content } = req.body;
-        if (req.user.role !== 'INTERN') return res.status(403).json({ error: "Sadece stajyerler günlük arşiv ekleyebilir." });
-        if (!content || content.trim() === "") return res.status(400).json({ error: "Arşiv içeriği boş olamaz." });
+        const internId = req.user.userId || req.user.id;
 
-        const newArchive = await prisma.dailyArchive.create({ data: { content: content, internId: req.user.userId } });
-        res.status(201).json({ message: "Günlük arşiviniz başarıyla kaydedildi!", archive: newArchive });
-    } catch (error) { res.status(500).json({ error: "Günlük arşiv eklenirken bir hata oluştu." }); }
+        if (req.user.role !== 'INTERN') {
+            return res.status(403).json({ error: "Sadece stajyerler günlük arşiv ekleyebilir." });
+        }
+        if (!content || !content.trim()) {
+            return res.status(400).json({ error: "Arşiv içeriği boş olamaz." });
+        }
+
+        // 1. Ham metni Python AI servisine gönder (DB'ye kaydetmeden)
+        let aiResult = {
+            mentorNote: "Günlüğün başarıyla işlendi ve anonimleştirildi!",
+            mood: "Belirtilmedi",
+            topicsCovered: [],
+            challengesFaced: [],
+            socialInteractions: [],
+            sentimentScore: 70
+        };
+
+        try {
+            const aiResponse = await axios.post('http://127.0.0.1:8000/process-daily-entry', {
+                internId: internId,
+                dailyContent: content
+            }, { timeout: 60000 });
+
+            if (aiResponse.data) {
+                aiResult = { ...aiResult, ...aiResponse.data };
+            }
+        } catch (aiError) {
+            console.error("🚨 AI ANONİMLEŞTİRME HATASI:", aiError.message);
+        }
+
+        // 2. Ham metni çöpe atıp, SADECE AI'ın ürettiği JSON verisini DB'ye kaydet
+        const savedEntry = await prisma.dailyArchiveEntry.create({
+            data: {
+                internId: internId,
+                mood: aiResult.mood || "Normal",
+                topicsCovered: aiResult.topicsCovered || [],
+                challengesFaced: aiResult.challengesFaced || [],
+                socialInteractions: aiResult.socialInteractions || [],
+                sentimentScore: parseInt(aiResult.sentimentScore, 10) || 75
+            }
+        });
+
+        // 3. Frontend'e yanıt dön (Ham metin uçtu, DB'de sadece JSON var, mentör notu geçici)
+        res.status(201).json({
+            message: "Günlüğünüz anonimleştirilerek başarıyla işlendi!",
+            entry: savedEntry,
+            mentorNote: aiResult.mentorNote
+        });
+
+    } catch (error) {
+        console.error("🚨 GÜNLÜK İŞLEME HATASI:", error);
+        res.status(500).json({ error: "Günlük işlenirken bir hata oluştu." });
+    }
 };
 
 exports.getAllArchives = async (req, res) => {
     try {
-        const archives = await prisma.dailyArchive.findMany({
-            orderBy: { date: 'desc' },
-            include: { intern: { select: { id: true, name: true, surname: true } } }
+        const entries = await prisma.dailyArchiveEntry.findMany({
+            orderBy: { date: 'desc' }
         });
-        res.status(200).json(archives);
-    } catch (error) { res.status(500).json({ error: "Arşivler listelenirken hata oluştu." }); }
+        res.status(200).json(entries);
+    } catch (error) {
+        res.status(500).json({ error: "Arşivler listelenirken hata oluştu." });
+    }
 };
 
-// 🚀 EKSİK Olan ve Hata Veren Fonksiyon Eklendi:
 exports.deleteArchive = async (req, res) => {
     try {
-        const archiveId = parseInt(req.params.id);
+        const archiveId = parseInt(req.params.id, 10);
         await prisma.dailyArchive.delete({
             where: { id: archiveId }
         });
         res.status(200).json({ message: "Arşiv başarıyla silindi." });
     } catch (error) {
-        console.error("🚨 ARŞİV SİLME HATASI:", error);
         res.status(500).json({ error: "Arşiv silinirken bir hata oluştu." });
     }
 };
