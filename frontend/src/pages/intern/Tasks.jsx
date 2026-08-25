@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
-import { Clock, CheckCircle2, Circle, Play, AlertTriangle, Code, ExternalLink, Trash2, Pencil } from 'lucide-react';
+import { Clock, CheckCircle2, Circle, Play, AlertTriangle, Code, ExternalLink, Trash2, Pencil, ListChecks } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 const URGENCY_CONFIG = {
@@ -25,6 +25,24 @@ export default function Tasks() {
     const [updatingId, setUpdatingId] = useState(null);
     const [editingTask, setEditingTask] = useState(null);
     const { user } = useAuth();
+    
+    // Çoklu seçim stateleri
+    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [selectedTasks, setSelectedTasks] = useState([]);
+
+    const handleDeleteSelectedTasks = async () => {
+        if (selectedTasks.length === 0) return;
+        if (!window.confirm(`Seçilen ${selectedTasks.length} görev kalıcı olarak silinsin mi?`)) return;
+    
+        try {
+            await Promise.all(selectedTasks.map(id => api.delete(`/tasks/${id}`)));
+            load(false);
+            setSelectedTasks([]);
+            alert("✅ Seçilen görevler başarıyla silindi.");
+        } catch (err) {
+            alert("❌ Toplu görev silinemedi: " + (err.response?.data?.error || err.message));
+        }
+    };
 
     const handleDeleteTask = async (taskId) => {
         if (!window.confirm("Bu görevi silmek istediğinize emin misiniz?")) return;
@@ -101,10 +119,29 @@ export default function Tasks() {
 
     return (
         <div>
-            {/* Başlık */}
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold mb-1">Görevlerim</h1>
-                <p className="text-white/40 text-sm">Size atanan tüm görevler ve durumları</p>
+            {/* 🚀 BAŞLIK VE ÇOKLU SEÇİM BUTONU BİR ARADA */}
+            <div className="flex items-center justify-between mb-6">
+                <div>
+                    <h1 className="text-2xl font-bold mb-1">Görevlerim</h1>
+                    <p className="text-white/40 text-sm">Size atanan tüm görevler ve durumları</p>
+                </div>
+                
+                {user?.role === 'ADMIN' && tasks.length > 0 && (
+                    <button
+                        onClick={() => {
+                            setIsSelectMode(!isSelectMode);
+                            if (isSelectMode) setSelectedTasks([]); // Kapatıldığında seçimleri sıfırla
+                        }}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
+                            isSelectMode 
+                                ? 'bg-brand/20 text-brand-light border border-brand/30' 
+                                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                        }`}
+                    >
+                        <ListChecks size={16} />
+                        {isSelectMode ? 'Seçimi İptal Et' : 'Çoklu Seçim'}
+                    </button>
+                )}
             </div>
 
             {/* İstatistik Kartları */}
@@ -126,6 +163,22 @@ export default function Tasks() {
                     <div className="stat-value text-brand-light">{stats.overdue}</div>
                 </div>
             </div>
+
+            {/* 🚀 TOPLU İŞLEM BARI (Sadece Seçim Modu Açıkken Görünür) */}
+            {isSelectMode && user?.role === 'ADMIN' && tasks.length > 0 && (
+                <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-white/10 mb-4">
+                    <span className="text-sm text-white/60 font-semibold">
+                        {selectedTasks.length} görev seçildi
+                    </span>
+                    <button
+                        onClick={handleDeleteSelectedTasks}
+                        disabled={selectedTasks.length === 0}
+                        className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                        <Trash2 size={14} /> Seçilenleri Sil
+                    </button>
+                </div>
+            )}
 
             {/* Yükleniyor */}
             {loading && (
@@ -150,13 +203,32 @@ export default function Tasks() {
                         const isUpdating = updatingId === task.id;
 
                         return (
-                            <div key={task.id} className="card hover:border-white/15 transition-colors relative">
+                            <div key={task.id} className="card hover:border-white/15 transition-colors relative flex flex-col">
                                 
-                                {/* Üst: Durum + Aciliyet + Kontroller */}
+                                {/* Üst: Checkbox, Durum, Aciliyet ve Kontroller */}
                                 <div className="flex items-center justify-between mb-3">
-                                    <div className={`flex items-center gap-2 ${status.color}`}>
-                                        {status.icon}
-                                        <span className="text-sm font-semibold">{status.label}</span>
+                                    <div className="flex items-center gap-3">
+                                        
+                                        {/* CHECKBOX BURADA! */}
+                                        {isSelectMode && user?.role === 'ADMIN' && (
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedTasks.includes(task.id)}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) {
+                                                        setSelectedTasks([...selectedTasks, task.id]);
+                                                    } else {
+                                                        setSelectedTasks(selectedTasks.filter(id => id !== task.id));
+                                                    }
+                                                }}
+                                                className="w-4 h-4 accent-brand cursor-pointer"
+                                            />
+                                        )}
+
+                                        <div className={`flex items-center gap-2 ${status.color}`}>
+                                            {status.icon}
+                                            <span className="text-sm font-semibold">{status.label}</span>
+                                        </div>
                                     </div>
                                     
                                     <div className="flex items-center gap-2">
@@ -174,14 +246,14 @@ export default function Tasks() {
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
                                                     title="Görevi Düzenle"
-                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-brand/20 text-white/50 hover:text-brand-light transition-colors"
+                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-brand/20 text-white/50 hover:text-brand-light transition-colors cursor-pointer"
                                                 >
                                                     <Pencil size={12} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
                                                     title="Görevi Sil"
-                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors"
+                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors cursor-pointer"
                                                 >
                                                     <Trash2 size={12} />
                                                 </button>

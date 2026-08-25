@@ -1,16 +1,13 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 import { useEffect, useState, useRef } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocketContext } from '../context/SocketContext';
-import { io } from 'socket.io-client';
 import { Send, Circle, Pencil, Trash2, X } from 'lucide-react';
-
 
 export default function Chat() {
     const { user } = useAuth();
-    const { onlineUsers, connected, sendMessage, sendTyping, unreadCounts, clearUnread } = useSocketContext();
-        
+    const { socket, onlineUsers, connected, sendMessage, sendTyping, unreadCounts, clearUnread } = useSocketContext();
+
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState(null);
     const [messages, setMessages] = useState([]);
@@ -22,19 +19,17 @@ export default function Chat() {
     const messagesEndRef = useRef(null);
     const typingTimeoutRef = useRef(null);
     const otherTypingTimeoutRef = useRef(null);
-
     const [editingMessage, setEditingMessage] = useState(null);
     const [now, setNow] = useState(() => Date.now());
-    
-    // Kullanıcıları yükle (Admin → tüm stajyerler, Stajyer → sadece admin)
+
+    // 1. Kullanıcı Listesi
     useEffect(() => {
         (async () => {
             try {
-                if (user.role === 'ADMIN') {
+                if (user?.role === 'ADMIN') {
                     const res = await api.get('/interns');
                     setUsers(res.data.interns || []);
                 } else {
-                    // Stajyer için admin'leri bul (role='ADMIN' olanlar)
                     const res = await api.get('/users?role=ADMIN');
                     setUsers(res.data || []);
                 }
@@ -46,112 +41,110 @@ export default function Chat() {
         })();
     }, [user]);
 
-    // Seçili kullanıcı değişince mesaj geçmişini yükle
+    // 2. Seçili Kullanıcının Mesaj Geçmişini Yükleme
     useEffect(() => {
-        if (!selectedUser) return;
+        if (!selectedUser?.id) return;
+
+        let isMounted = true;
         (async () => {
             try {
                 const res = await api.get(`/messages/${selectedUser.id}`);
-                setMessages(res.data.messages || []);
+                if (isMounted) {
+                    const list = Array.isArray(res.data) ? res.data : (res.data.messages || []);
+                    setMessages(list);
+                }
             } catch (e) {
                 console.error('Mesajlar yüklenemedi:', e);
             }
         })();
-    }, [selectedUser]);
 
-    // Yeni mesaj geldiğinde (Socket.io)
+        return () => {
+            isMounted = false;
+        };
+    }, [selectedUser?.id]);
+
+    // 3. Socket Canlı Olay Dinleyicileri
     useEffect(() => {
-        if (!user) return;
+        if (!socket || !selectedUser) return;
 
-            const token = localStorage.getItem('token');
+        const myId = Number(user?.id || user?.userId);
+        const activeUserId = Number(selectedUser.id);
 
-            const socket = io('http://localhost:5001', {
-                auth: { token: token },
-                transports: ['polling', 'websocket'], // Önce HTTP (polling) ile başlasın, sonra websocket'e geçsin (Hata riskini sıfırlar)
-                autoConnect: true
-            });
+        const handleNewMessage = (msg) => {
+            const senderId = Number(msg.sender?.id || msg.senderId);
+            const receiverId = Number(msg.receiver?.id || msg.receiverId);
 
-        socket.on('new_message', (msg) => {
-            // Bu konuşmaya ait mesaj mı?
-            const relevant =
-                (msg.sender.id === user.id && msg.receiver.id === selectedUser?.id) ||
-                (msg.sender.id === selectedUser?.id && msg.receiver.id === user.id);
+            const isCurrentChat =
+                (senderId === myId && receiverId === activeUserId) ||
+                (senderId === activeUserId && receiverId === myId);
 
-            if (relevant) {
-                setMessages((prev) => [...prev, msg]);
+            if (isCurrentChat) {
+                setMessages((prev) => {
+                    if (prev.some((m) => m.id === msg.id)) return prev;
+                    return [...prev, msg];
+                });
             }
-        });
+        };
 
-        socket.on('user_typing', (data) => {
-            if (data.userId === selectedUser?.id) {
+        const handleUserTyping = (data) => {
+            if (Number(data.userId) === activeUserId) {
                 setOtherTyping(data.isTyping);
                 clearTimeout(otherTypingTimeoutRef.current);
                 if (data.isTyping) {
-                    otherTypingTimeoutRef.current = setTimeout(() => {
-                        setOtherTyping(false);
-                    }, 3000);
+                    otherTypingTimeoutRef.current = setTimeout(() => setOtherTyping(false), 3000);
                 }
             }
-        });
+        };
 
-        socket.on('message_updated', (updatedMsg) => {
-            setMessages((prev) => prev.map(m => m.id === updatedMsg.id ? updatedMsg : m));
-        });
-    
-        socket.on('message_deleted', (data) => {
-            setMessages((prev) => prev.filter(m => m.id !== data.id));
-        });
+        const handleMessageUpdated = (updated) => {
+            setMessages((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
+        };
+
+        const handleMessageDeleted = (data) => {
+            setMessages((prev) => prev.filter((m) => m.id !== data.id));
+        };
+
+        socket.on('new_message', handleNewMessage);
+        socket.on('user_typing', handleUserTyping);
+        socket.on('message_updated', handleMessageUpdated);
+        socket.on('message_deleted', handleMessageDeleted);
 
         return () => {
-            socket.disconnect();
+            socket.off('new_message', handleNewMessage);
+            socket.off('user_typing', handleUserTyping);
+            socket.off('message_updated', handleMessageUpdated);
+            socket.off('message_deleted', handleMessageDeleted);
         };
-    }, [user, selectedUser]);
+    }, [socket, selectedUser, user]);
 
-    useEffect(() => {
-        const timer = setInterval(() => setNow(Date.now()), 1000);
-        return () => clearInterval(timer);
-    }, []);
-
-    // Otomatik scroll
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
-
-    // Seçili kullanıcı aktif olduğunda veya mesaj geldiğinde okundu yap / bildirimi sıfırla
-    useEffect(() => {
-        if (selectedUser?.id && unreadCounts[selectedUser.id] > 0) {
-            clearUnread(selectedUser.id);
-        }
-    }, [selectedUser, messages, unreadCounts, clearUnread]);
-
+    // Mesaj Gönderme / Düzenleme
     const handleSend = async () => {
         if (!newMessage.trim() || !selectedUser) return;
-        
-        // Düzenleme modundaysak API'ye PATCH at, normal gönderimse Socket.io kullan
+
         if (editingMessage) {
             try {
                 await api.patch(`/messages/${editingMessage.id}`, { content: newMessage.trim() });
                 setEditingMessage(null);
                 setNewMessage('');
             } catch (e) {
-                alert(e.response?.data?.error || "Mesaj düzenlenemedi.");
+                alert(e.response?.data?.error || 'Mesaj düzenlenemedi.');
             }
         } else {
             sendMessage(selectedUser.id, newMessage.trim());
             setNewMessage('');
         }
-        
+
         if (isTyping) {
             sendTyping(selectedUser.id, false);
             setIsTyping(false);
         }
     };
-    
+
     const handleDeleteMsg = async (msgId) => {
         try {
             await api.delete(`/messages/${msgId}`);
         } catch (e) {
-            alert(e.response?.data?.error || "Mesaj silinemedi.");
+            alert(e.response?.data?.error || 'Mesaj silinemedi.');
         }
     };
 
@@ -172,9 +165,23 @@ export default function Chat() {
     };
 
     const handleUserClick = (u) => {
+        if (selectedUser?.id === u.id) return;
         setSelectedUser(u);
-        clearUnread(u.id); // Tıklandığı an bildirim sayacı sıfırlanır
+        setMessages([]);
+        setEditingMessage(null);
+        setNewMessage('');
+        setOtherTyping(false);
+        clearUnread(u.id);
     };
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     return (
         <div className="flex h-[calc(100vh-8rem)]">
@@ -196,9 +203,7 @@ export default function Chat() {
                     )}
 
                     {!loading && users.length === 0 && (
-                        <div className="text-center py-8 text-white/40 text-sm">
-                            Konuşma yok
-                        </div>
+                        <div className="text-center py-8 text-white/40 text-sm">Konuşma yok</div>
                     )}
 
                     {users.map((u) => (
@@ -213,24 +218,21 @@ export default function Chat() {
                                 <div className="w-10 h-10 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold">
                                     {u.name?.charAt(0)}
                                 </div>
-                                {onlineUsers.includes(u.id) && (
+                                {onlineUsers.includes(Number(u.id)) && (
                                     <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-panel"></span>
                                 )}
                             </div>
                             <div className="flex-1 min-w-0 text-left">
-                                <div className="font-semibold truncate">
-                                    {u.name} {u.surname}
-                                </div>
+                                <div className="font-semibold truncate">{u.name} {u.surname}</div>
                                 <div className="text-xs text-white/40 truncate">
-                                    {onlineUsers.includes(u.id) ? 'Çevrimiçi' : 'Çevrimdışı'}
+                                    {onlineUsers.includes(Number(u.id)) ? 'Çevrimiçi' : 'Çevrimdışı'}
                                 </div>
                             </div>
-
                             {unreadCounts[u.id] > 0 && selectedUser?.id !== u.id && (
-                            <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
-                                {unreadCounts[u.id]}
-                            </div>
-                        )}
+                                <div className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-lg animate-pulse">
+                                    {unreadCounts[u.id]}
+                                </div>
+                            )}
                         </button>
                     ))}
                 </div>
@@ -247,36 +249,32 @@ export default function Chat() {
                     </div>
                 ) : (
                     <>
-                        {/* Header */}
                         <div className="p-4 border-b border-white/5 bg-panel">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold">
                                         {selectedUser.name?.charAt(0)}
                                     </div>
-                                    {onlineUsers.includes(selectedUser.id) && (
+                                    {onlineUsers.includes(Number(selectedUser.id)) && (
                                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-panel"></span>
                                     )}
                                 </div>
                                 <div>
-                                    <div className="font-bold">
-                                        {selectedUser.name} {selectedUser.surname}
-                                    </div>
+                                    <div className="font-bold">{selectedUser.name} {selectedUser.surname}</div>
                                     <div className="text-xs text-white/40">
-                                        {otherTyping ? 'Yazıyor...' : onlineUsers.includes(selectedUser.id) ? 'Çevrimiçi' : 'Çevrimdışı'}
+                                        {otherTyping ? 'Yazıyor...' : onlineUsers.includes(Number(selectedUser.id)) ? 'Çevrimiçi' : 'Çevrimdışı'}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Mesajlar */}
                         <div className="flex-1 overflow-y-auto p-4 space-y-3">
                             {messages.map((msg) => {
-                                // Bu senin user.id kullanılarak yapılmış güncel kontrolün
-                                const isMine = msg.sender.id === user.id; 
-                                
-                                // 30 saniye (30.000 ms) kontrolü hesaplanıyor
-                                const timeDiff = now - new Date(msg.timestamp).getTime();
+                                const senderId = Number(msg.sender?.id || msg.senderId);
+                                const myId = Number(user?.id || user?.userId);
+                                const isMine = senderId === myId;
+                                const validDate = msg.timestamp || msg.createdAt || new Date();
+                                const timeDiff = now - new Date(validDate).getTime();
                                 const canEdit = isMine && timeDiff <= 30000;
 
                                 return (
@@ -284,20 +282,21 @@ export default function Chat() {
                                         <div className={`max-w-md px-4 py-2 rounded-2xl ${isMine ? 'bg-brand text-white rounded-br-sm' : 'bg-panel text-white rounded-bl-sm'}`}>
                                             <p className="text-sm">{msg.content}</p>
                                             <div className={`text-xs mt-1 ${isMine ? 'text-white/60' : 'text-white/40'}`}>
-                                                {new Date(msg.timestamp).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                                {new Date(validDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
-
-                                        {/* Düzenle / Sil Butonları - Sadece koşul uyuyorsa görünür */}
                                         {canEdit && (
                                             <div className="flex gap-3 mt-1 mr-1 text-[10px] text-white/40">
-                                                <button 
-                                                    onClick={() => { setEditingMessage(msg); setNewMessage(msg.content); }}
+                                                <button
+                                                    onClick={() => {
+                                                        setEditingMessage(msg);
+                                                        setNewMessage(msg.content);
+                                                    }}
                                                     className="hover:text-brand-light flex items-center gap-1 transition-colors"
                                                 >
                                                     <Pencil size={10} /> Düzenle
                                                 </button>
-                                                <button 
+                                                <button
                                                     onClick={() => handleDeleteMsg(msg.id)}
                                                     className="hover:text-red-400 flex items-center gap-1 transition-colors"
                                                 >
@@ -311,7 +310,6 @@ export default function Chat() {
                             <div ref={messagesEndRef} />
                         </div>
 
-                        {/* Düzenleme Modu Göstergesi */}
                         {editingMessage && (
                             <div className="px-4 py-2 bg-brand/20 text-brand-light text-xs flex justify-between items-center border-t border-white/5">
                                 <span>Mesaj düzenleniyor...</span>
@@ -321,7 +319,6 @@ export default function Chat() {
                             </div>
                         )}
 
-                        {/* Input */}
                         <div className="p-4 border-t border-white/5 bg-panel">
                             <div className="flex gap-2">
                                 <input
@@ -332,13 +329,8 @@ export default function Chat() {
                                     placeholder="Mesaj yazın..."
                                     className="input-dark flex-1"
                                 />
-                                <button
-                                    onClick={handleSend}
-                                    disabled={!newMessage.trim()}
-                                    className="btn-brand px-6 flex items-center gap-2 disabled:opacity-50"
-                                >
-                                    <Send size={16} />
-                                    Gönder
+                                <button onClick={handleSend} disabled={!newMessage.trim()} className="btn-brand px-6 flex items-center gap-2 disabled:opacity-50">
+                                    <Send size={16} /> {editingMessage ? 'Kaydet' : 'Gönder'}
                                 </button>
                             </div>
                         </div>

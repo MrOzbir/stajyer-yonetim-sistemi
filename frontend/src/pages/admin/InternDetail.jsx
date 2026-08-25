@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { 
     ArrowLeft, Bot, Calendar, CheckCircle2, Clock, 
-    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles, Trash2, Pencil
+    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles, Trash2, Pencil, ListChecks
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,14 +11,59 @@ export default function InternDetail() {
     const { id } = useParams();
     const { user } = useAuth();
     const navigate = useNavigate();
+    
+    // Temel Stajyer Verileri
     const [intern, setIntern] = useState(null);
     const [reports, setReports] = useState([]);
     const [activeTab, setActiveTab] = useState('overview');
     const [loading, setLoading] = useState(true);
+    
+    // AI Rapor İşlemleri
     const [generating, setGenerating] = useState(false);    
+    
+    // Görev Modal ve Düzenleme İşlemleri
     const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
     const [taskForm, setTaskForm] = useState({ title: '', description: '', repoLink: '', deadline: '' });
     const [editingTask, setEditingTask] = useState(null);
+    
+    // Çoklu Seçim İşlemleri (Görevler)
+    const [isSelectTasksMode, setIsSelectTasksMode] = useState(false);
+    const [selectedTasks, setSelectedTasks] = useState([]);
+
+    // Çoklu Seçim İşlemleri (Raporlar)
+    const [isSelectReportsMode, setIsSelectReportsMode] = useState(false);
+    const [selectedReports, setSelectedReports] = useState([]);
+
+    // 🗑️ SEÇİLİ GÖREVLERİ TOPLU SİL
+    const handleDeleteSelectedTasks = async () => {
+        if (selectedTasks.length === 0) return;
+        if (!window.confirm(`Seçilen ${selectedTasks.length} görev kalıcı olarak silinsin mi?`)) return;
+
+        try {
+            await Promise.all(selectedTasks.map(id => api.delete(`/tasks/${id}`)));
+            fetchIntern(); // Listeyi güncelle
+            setSelectedTasks([]);
+            alert("✅ Seçilen görevler başarıyla silindi.");
+        } catch (err) {
+            alert("❌ Toplu görev silinemedi: " + (err.response?.data?.error || err.message));
+        }
+    };
+
+    const handleDeleteSelectedReports = async () => {
+        if (selectedReports.length === 0) return;
+        if (!window.confirm(`Seçilen ${selectedReports.length} rapor kalıcı olarak silinsin mi?`)) return;
+    
+        try {
+            // Her biri için silme isteği atıyoruz (veya toplu silme endpoint'iniz varsa onu kullanabilirsiniz)
+            await Promise.all(selectedReports.map(id => api.delete(`/ai/reports/${id}`)));
+            
+            setReports(prev => prev.filter(r => !selectedReports.includes(r.id)));
+            setSelectedReports([]);
+            alert("✅ Seçilen raporlar başarıyla silindi.");
+        } catch (e) {
+            alert("❌ Toplu silme başarısız: " + (e.response?.data?.error || e.message));
+        }
+    };
 
     const handleAssignTask = async (e) => {
         e.preventDefault();
@@ -70,12 +115,12 @@ export default function InternDetail() {
 
     const fetchIntern = async () => {
         try {
-            const res = await api.get(`/interns/${id}`);
-            
-            // Veri nerede saklanıyorsa saklansın, en içteki gerçek stajyer objesini bulur.
+            const res = await api.get(`/interns/${id}`);            
             const actualData = res.data.intern?.intern || res.data.intern || res.data;
-            
             setIntern(actualData);
+
+            const reportsRes = await api.get(`/ai/reports/${id}`);
+            setReports(reportsRes.data || []);
             
         } catch (error) {
             console.error('Stajyer detayı alınamadı:', error);
@@ -369,59 +414,99 @@ export default function InternDetail() {
             {/* Görevler */}
             {activeTab === 'tasks' && (
                 <div className="card">
-                    <h3 className="font-bold mb-4">Tüm Görevler</h3>
+                    {/* Başlık ve Çoklu Seçim Butonu */}
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-bold">Tüm Görevler</h3>
+                        {user?.role === 'ADMIN' && intern.tasksReceived?.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    setIsSelectTasksMode(!isSelectTasksMode);
+                                    if (isSelectTasksMode) setSelectedTasks([]);
+                                }}
+                                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                                    isSelectTasksMode ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
+                                }`}
+                            >
+                                <ListChecks size={16} />
+                                {isSelectTasksMode ? 'Seçimi İptal Et' : 'Çoklu Seçim'}
+                            </button>
+                        )}
+                    </div>
+
+                    {/* Toplu İşlem Barı (Silme) */}
+                    {isSelectTasksMode && user?.role === 'ADMIN' && selectedTasks.length > 0 && (
+                        <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-white/10 mb-4 animate-in fade-in slide-in-from-top-2">
+                            <span className="text-sm text-white/60 font-semibold">{selectedTasks.length} görev seçildi</span>
+                            <button onClick={handleDeleteSelectedTasks} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
+                                <Trash2 size={14} /> Seçilenleri Sil
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Görev Listesi */}
                     {intern.tasksReceived?.length > 0 ? (
                         <div className="space-y-2">
                             {intern.tasksReceived.map((task) => (
                                 <div key={task.id} className="p-3 bg-night/50 rounded-lg flex items-center justify-between group">
                                     
-                                    {/* Sol Kısım: Başlık, Açıklama ve Deadline */}
-                                    <div className="flex-1 pr-4">
-                                        {/* 1. Başlık */}
-                                        <div className="font-semibold flex items-center gap-2">
-                                            {task.repoLink ? (
-                                                <a 
-                                                    href={task.repoLink} 
-                                                    target="_blank" 
-                                                    rel="noopener noreferrer"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                    className="hover:text-brand-light hover:underline"
-                                                >
-                                                    {task.title}
-                                                    <span className="ml-1 text-xs text-white/40">↗</span>
-                                                </a>
-                                            ) : (
-                                                task.title
-                                            )}
-                                        </div>
-
-                                        {/* 🚀 2. YENİ EKLENEN KISIM: Görev Açıklaması */}
-                                        {task.description && (
-                                            <p className="text-sm text-white/60 mt-1.5 line-clamp-2">
-                                                {task.description}
-                                            </p>
-                                        )}
-
-                                        {/* 3. Deadline */}
-                                        {task.deadline && (
-                                            <div className="text-xs text-white/40 mt-2">
-                                                <Clock size={12} className="inline mr-1" />
-                                                Deadline: {new Date(task.deadline).toLocaleDateString('tr-TR')}
+                                    {/* Sol Kısım: Checkbox (Varsa), Başlık, Açıklama ve Deadline */}
+                                    <div className="flex items-start gap-3 flex-1 pr-4">
+                                        {/* 🚀 GİZLİ CHECKBOX BURADA */}
+                                        {isSelectTasksMode && user?.role === 'ADMIN' && (
+                                            <div className="mt-1">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedTasks.includes(task.id)}
+                                                    onChange={(e) => {
+                                                        if (e.target.checked) setSelectedTasks([...selectedTasks, task.id]);
+                                                        else setSelectedTasks(selectedTasks.filter(id => id !== task.id));
+                                                    }}
+                                                    className="w-4 h-4 accent-brand cursor-pointer"
+                                                />
                                             </div>
                                         )}
+
+                                        <div className="flex-1">
+                                            <div className="font-semibold flex items-center gap-2">
+                                                {task.repoLink ? (
+                                                    <a 
+                                                        href={task.repoLink} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="hover:text-brand-light hover:underline"
+                                                    >
+                                                        {task.title}
+                                                        <span className="ml-1 text-xs text-white/40">↗</span>
+                                                    </a>
+                                                ) : (
+                                                    task.title
+                                                )}
+                                            </div>
+                                            {task.description && (
+                                                <p className="text-sm text-white/60 mt-1.5 line-clamp-2">
+                                                    {task.description}
+                                                </p>
+                                            )}
+                                            {task.deadline && (
+                                                <div className="text-xs text-white/40 mt-2">
+                                                    <Clock size={12} className="inline mr-1" />
+                                                    Deadline: {new Date(task.deadline).toLocaleDateString('tr-TR')}
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    {/* Sağ Kısım: Durum Rozeti ve Butonlar flex içinde */}
+                                    {/* Sağ Kısım: Durum Rozeti ve Butonlar */}
                                     <div className="flex items-center gap-3">
-                                    <span className={`px-2 py-1 rounded text-xs font-semibold w-28 text-center inline-block ${
-                                        task.status === 'COMPLETED' ? 'bg-green-500/20 text-green-300' :
-                                        task.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-300' :
-                                        'bg-yellow-500/20 text-yellow-300'
-                                    }`}>
-                                        {task.status}
-                                    </span>
+                                        <span className={`px-2 py-1 rounded text-xs font-semibold w-28 text-center inline-block ${
+                                            task.status === 'COMPLETED' ? 'bg-green-500/20 text-green-300' :
+                                            task.status === 'IN_PROGRESS' ? 'bg-blue-500/20 text-blue-300' :
+                                            'bg-yellow-500/20 text-yellow-300'
+                                        }`}>
+                                            {task.status}
+                                        </span>
 
-                                        {/* 🚀 ADMIN KONTROLLERİ (Düzenle ve Sil) */}
                                         {user?.role === 'ADMIN' && (
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
@@ -533,6 +618,39 @@ export default function InternDetail() {
             {/* AI Raporları */}
             {activeTab === 'reports' && (
                 <div className="space-y-4">
+                    {/* Başlık ve Çoklu Seçim Butonu */}
+                    {reports.length > 0 && user?.role === 'ADMIN' && (
+                        <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-white/10">
+                            <span className="text-sm text-white/60">
+                                {selectedReports.length > 0 ? `${selectedReports.length} rapor seçildi` : "Toplu işlem için rapor seçin"}
+                            </span>
+                            
+                            <div className="flex items-center gap-3">
+                                {selectedReports.length > 0 && (
+                                    <button
+                                        onClick={handleDeleteSelectedReports}
+                                        className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    >
+                                        <Trash2 size={14} /> Seçilenleri Sil ({selectedReports.length})
+                                    </button>
+                                )}
+                                
+                                <button
+                                    onClick={() => {
+                                        setIsSelectReportsMode(!isSelectReportsMode);
+                                        if (isSelectReportsMode) setSelectedReports([]);
+                                    }}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
+                                        isSelectReportsMode ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
+                                    }`}
+                                >
+                                    <ListChecks size={16} />
+                                    {isSelectReportsMode ? 'Seçimi İptal Et' : 'Çoklu Seçim'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
                     {reports.length === 0 ? (
                         <div className="card text-center py-12">
                             <Bot size={48} className="mx-auto mb-4 text-white/20" />
@@ -543,7 +661,23 @@ export default function InternDetail() {
                         </div>
                     ) : (
                         reports.map((report) => (
-                            <ReportCard key={report.id} report={report} onDelete={deleteReport} />
+                            <div key={report.id} className="flex items-center gap-3">
+                                {/* 🚀 DÜZELTME: isSelectReportsMode şartı eklendi */}
+                                {isSelectReportsMode && user?.role === 'ADMIN' && (
+                                    <input
+                                        type="checkbox"
+                                        checked={selectedReports.includes(report.id)}
+                                        onChange={(e) => {
+                                            if (e.target.checked) setSelectedReports([...selectedReports, report.id]);
+                                            else setSelectedReports(selectedReports.filter(id => id !== report.id));
+                                        }}
+                                        className="w-4 h-4 accent-brand cursor-pointer"
+                                    />
+                                )}
+                                <div className="flex-1">
+                                    <ReportCard report={report} onDelete={deleteReport} />
+                                </div>
+                            </div>
                         ))
                     )}
                 </div>

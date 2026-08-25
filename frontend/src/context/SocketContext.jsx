@@ -21,7 +21,10 @@ export function SocketProvider({ children }) {
         const token = localStorage.getItem('token');
         const newSocket = io('http://localhost:5001', {
             auth: { token },
-            transports: ['websocket']
+            transports: ['polling', 'websocket'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000
         });
         
         socketRef.current = newSocket;

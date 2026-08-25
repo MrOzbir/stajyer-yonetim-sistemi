@@ -31,3 +31,10 @@ class ChatRequest(BaseModel):
     message: str
     messages: List[ChatMessage] = []
     context: Optional[dict] = None
+
+class DailyArchivePayload(BaseModel):
+    internId: Optional[int] = None
+    dailyContent: str
+
+class DailySummaryPayload(BaseModel):
+    dailyContents: str

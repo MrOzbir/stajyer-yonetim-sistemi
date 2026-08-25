@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
-import { Archive, RotateCcw, Users, ArchiveRestore, Bot, Trash2 } from 'lucide-react';
+import { Archive, RotateCcw, Users, ArchiveRestore, Bot, Trash2,  } from 'lucide-react';
 
 export default function Interns() {
     const [interns, setInterns] = useState([]);

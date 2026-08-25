@@ -2,7 +2,8 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     ShieldAlert, LayoutDashboard, Users, Building2,
-    MessageSquare, Briefcase, GraduationCap, LogOut
+    MessageSquare, Briefcase, GraduationCap, LogOut,
+    BookOpenText
 } from 'lucide-react';
 import { useSocketContext } from '../context/SocketContext';
 
@@ -10,6 +11,7 @@ const adminLinks = [
     { to: '/admin', end: true, label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
     { to: '/admin/interns', label: 'Stajyerler', icon: <Users size={18} /> },
     { to: '/admin/departments', label: 'Departmanlar', icon: <Building2 size={18} /> },
+    { to: '/admin/summaries', label: 'Günlük Özetler', icon: <BookOpenText size={18} /> },
     { to: '/admin/chat', label: 'Mesajlar', icon: <MessageSquare size={18} /> },
 ];
 
