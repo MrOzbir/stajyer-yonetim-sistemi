@@ -6,7 +6,7 @@ import { useSocketContext } from '../../context/SocketContext';
 import { 
     BookOpen, Sparkles, Bell, 
     MessageSquare, Clock, AlertTriangle, CheckCircle2, ChevronRight, Bot,
-    FileText, X, Calendar, Award, Info
+    FileText, X, Calendar, Award, Info, Mail // 🚀 Mail ikonu eklendi
 } from 'lucide-react';
 
 export default function InternDashboard() {
@@ -28,6 +28,11 @@ export default function InternDashboard() {
     const [historyList, setHistoryList] = useState([]);
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
+
+    // 🚀 MAIL KAYIT MODAL DURUMLARI
+    const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+    const [email, setEmail] = useState('');
+    const [isSavingEmail, setIsSavingEmail] = useState(false);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -87,16 +92,45 @@ export default function InternDashboard() {
         }
     };
 
+    // 🚀 MAIL KAYDETME FONKSİYONU
+    const handleSaveEmail = async () => {
+        if (!email) {
+            alert("Lütfen geçerli bir e-posta adresi girin.");
+            return;
+        }
+        setIsSavingEmail(true);
+        try {
+            await api.put('/interns/profile/email', { notificationEmail: email });
+            alert("✅ Görev bildirim e-postası başarıyla kaydedildi!");
+            setIsEmailModalOpen(false);
+        } catch (error) {
+            console.error("Mail kaydetme hatası:", error); 
+            alert("❌ Mail kaydedilemedi.");
+        } finally {
+            setIsSavingEmail(false);
+        }
+    };
+
     const activeTasks = tasks.filter(t => t.status !== 'COMPLETED' && t.deadline);
     activeTasks.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
 
     return (
         <div className="flex flex-col h-[calc(100vh-6rem)] min-h-[600px]">
             
-            {/* Karşılama */}
-            <div className="shrink-0 flex items-center gap-2 mb-4">
-                <h1 className="text-xl font-bold">Merhaba, {user?.name}! 👋</h1>
-                <p className="text-white/40 text-xs hidden sm:block">• Bugünün bildirimleri ve AI mentöründen notlar</p>
+            {/* 🚀 BAŞLIK VE MAIL BUTONU */}
+            <div className="shrink-0 flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-bold">Merhaba, {user?.name}! 👋</h1>
+                    <p className="text-white/40 text-xs hidden sm:block">• Bugünün bildirimleri ve AI mentöründen notlar</p>
+                </div>
+                
+                {/* 🚀 SAĞ ÜST KÖŞEDEKİ UFAK MAVİ BUTON */}
+                <button
+                    onClick={() => setIsEmailModalOpen(true)}
+                    className="flex items-center gap-1.5 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                >
+                    <Mail size={14} />
+                </button>
             </div>
 
             {loading ? (
@@ -118,7 +152,6 @@ export default function InternDashboard() {
                             </div>
                         </div>
                         
-                        {/* 'relative group' eklendi: Tooltip bu alan üzerine gelindiğinde görünür */}
                         <div className="relative group flex items-center gap-3 sm:gap-4">
 
                             {/* Limit Sayacı */}
@@ -450,6 +483,47 @@ export default function InternDashboard() {
                             )}
                         </div>
 
+                    </div>
+                </div>
+            )}
+
+            {/* 🚀 GMAIL KAYIT MODALI */}
+            {isEmailModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <div className="bg-panel border border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-fadeIn">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                                <Mail className="text-blue-400" size={20} />
+                                E-Posta Bildirimleri
+                            </h3>
+                            <button 
+                                onClick={() => setIsEmailModalOpen(false)}
+                                className="text-white/50 hover:text-white transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <p className="text-xs text-white/60 mb-5 leading-relaxed">
+                            Görevlerinizin teslim süresine son 1 gün kala veya gecikme yaşandığında sistemin size otomatik hatırlatma e-postası atabilmesi için bildirim adresinizi kaydedin.
+                        </p>
+                        <div className="space-y-3">
+                            <input 
+                                type="email" 
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Örn: mailadresiniz@gmail.com"
+                                className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-blue-500 outline-none transition-colors"
+                            />
+                            <button 
+                                onClick={handleSaveEmail}
+                                disabled={isSavingEmail}
+                                className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                            >
+                                {isSavingEmail ? (
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                ) : 'Kaydet'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

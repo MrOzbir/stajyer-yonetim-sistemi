@@ -1,5 +1,7 @@
 require('dotenv').config();
 require('./src/services/cronService');
+require('./src/services/notificationService').initTaskNotifier();
+
 const http = require('http');
 const app = require('./app');
 const setupSocket = require('./src/config/socket');

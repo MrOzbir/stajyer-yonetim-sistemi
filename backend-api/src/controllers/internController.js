@@ -90,3 +90,22 @@ exports.deleteIntern = async (req, res) => {
         res.status(500).json({ error: error.message || "Silme işlemi başarısız oldu." });
     }
 };
+
+exports.updateNotificationEmail = async (req, res) => {
+    try {
+        const { notificationEmail } = req.body;
+        const internId = req.user.userId;
+
+        // Profil yoksa oluştur (upsert), varsa güncelle
+        const updatedProfile = await prisma.internProfile.upsert({
+            where: { userId: internId },
+            update: { notificationEmail: notificationEmail },
+            create: { userId: internId, notificationEmail: notificationEmail }
+        });
+
+        res.status(200).json({ message: "Bildirim e-postası başarıyla güncellendi!", profile: updatedProfile });
+    } catch (error) {
+        console.error("🚨 MAİL GÜNCELLEME HATASI:", error);
+        res.status(500).json({ error: "Bildirim e-postası kaydedilemedi." });
+    }
+};
