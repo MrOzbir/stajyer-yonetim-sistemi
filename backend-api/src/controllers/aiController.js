@@ -1,13 +1,14 @@
 const prisma = require('../config/database');
 const axios = require('axios');
 
+// Admin veya Stajyer için Rapor Oluşturma (Admin Paneli)
 exports.generateReport = async (req, res) => {
     const internId = parseInt(req.params.id, 10);
     
     if (isNaN(internId)) {
         return res.status(400).json({ error: "Geçersiz stajyer ID formatı." });
     }
-        try {
+    try {
         const internData = await prisma.user.findUnique({
             where: { id: internId },
             select: {
@@ -17,8 +18,15 @@ exports.generateReport = async (req, res) => {
                     orderBy: { createdAt: 'desc' },
                     take: 20
                 },
-                archives: {
-                    select: { content: true, date: true },
+                archiveEntries: {
+                    select: {
+                        mood: true,
+                        topicsCovered: true,
+                        challengesFaced: true,
+                        socialInteractions: true,
+                        sentimentScore: true,
+                        date: true
+                    },
                     orderBy: { date: 'desc' },
                     take: 15
                 },
@@ -33,12 +41,25 @@ exports.generateReport = async (req, res) => {
         if (!internData) return res.status(404).json({ error: "Stajyer bulunamadı." });
 
         const PYTHON_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000/analyze';
-        const aiResponse = await axios.post(PYTHON_SERVICE_URL, internData, { timeout: 180000 });
+        const payloadForAI = {
+            id: internData.id,
+            name: internData.name,
+            surname: internData.surname,
+            tasksReceived: internData.tasksReceived || [],
+            archives: (internData.archiveEntries || []).map(a => ({
+                date: a.date,
+                content: `Ruh Hali: ${a.mood || 'Bilinmiyor'}. Konular: ${(a.topicsCovered || []).join(', ')}. Zorluklar: ${(a.challengesFaced || []).join(', ')}`
+            })),
+            logs: internData.logs || []
+        };
+        
+        const aiResponse = await axios.post(PYTHON_SERVICE_URL, payloadForAI, { timeout: 180000 });
         const analysisResult = aiResponse.data;
 
         const newReport = await prisma.aiReport.create({
             data: {
                 internId: internId,
+                reportDate: new Date(),
                 overallScore: analysisResult.overallScore || 70,
                 strengths: analysisResult.strengths || [],
                 weaknesses: analysisResult.weaknesses || [],
@@ -46,14 +67,11 @@ exports.generateReport = async (req, res) => {
                 adminSummary: analysisResult.adminSummary || 'Analiz tamamlandı.',
                 internSummary: analysisResult.internSummary || analysisResult.adminSummary || 'İyi gidiyorsun!',
                 internFeedback: analysisResult.internFeedback || 'Gelişmeye devam et.',
-                
-                // Yapay zeka obje dizisi döndürürse, onları Prisma için düz metne (string) çeviriyoruz
                 learningResources: Array.isArray(analysisResult.learningResources)
                     ? analysisResult.learningResources.map(item => 
                         typeof item === 'object' ? `${item.title || 'Kaynak'} - ${item.url || ''}` : String(item)
                     )
                     : [],
-                
                 nextSteps: analysisResult.nextSteps || [],
                 encouragementQuote: analysisResult.encouragementQuote || 'Harika iş çıkarıyorsun!',
                 rawJson: analysisResult
@@ -67,15 +85,18 @@ exports.generateReport = async (req, res) => {
     }
 };
 
+// Admin veya Ilgili Stajyer için Rapor Listeleme
 exports.getReports = async (req, res) => {
-    const internId = parseInt(req.params.internId);
-    if (req.user.role !== 'ADMIN' && req.user.userId !== internId) {
+    const internId = parseInt(req.params.internId, 10);
+    const userId = parseInt(req.user?.userId || req.user?.id, 10);
+
+    if (req.user.role !== 'ADMIN' && userId !== internId) {
         return res.status(403).json({ error: "Bu raporu görüntüleme yetkiniz yok." });
     }
     try {
         const reports = await prisma.aiReport.findMany({
             where: { internId: internId },
-            orderBy: { reportDate: 'desc' }
+            orderBy: { id: 'desc' }
         });
         res.status(200).json(reports);
     } catch (error) {
@@ -83,9 +104,10 @@ exports.getReports = async (req, res) => {
     }
 };
 
+// Rapor Silme
 exports.deleteReport = async (req, res) => {
     try {
-        const reportId = parseInt(req.params.reportId);
+        const reportId = parseInt(req.params.reportId, 10);
         const report = await prisma.aiReport.findUnique({ where: { id: reportId } });
         if (!report) return res.status(404).json({ error: "Rapor bulunamadı." });
 
@@ -97,47 +119,42 @@ exports.deleteReport = async (req, res) => {
     }
 };
 
+// Stajyer: Son Mentörlük Özetini Getirme
 exports.getMyMentorship = async (req, res) => {
     try {
         if (req.user.role !== 'INTERN') return res.status(403).json({ error: "Bu rota sadece stajyerler içindir." });
 
+        const internId = parseInt(req.user?.userId || req.user?.id, 10);
+
         const latestReport = await prisma.aiReport.findFirst({
-            where: { internId: req.user.userId },
-            orderBy: { reportDate: 'desc' }
+            where: { internId: internId },
+            orderBy: { id: 'desc' }
         });
 
         if (!latestReport) {
             return res.status(404).json({ message: "Henüz mentörlük raporunuz oluşturulmamış.", report: null });
         }
 
-        res.status(200).json({
-            id: latestReport.id,
-            reportDate: latestReport.reportDate,
-            overallScore: latestReport.overallScore,
-            strengths: latestReport.strengths,
-            suggestions: latestReport.suggestions,
-            internSummary: latestReport.internSummary,
-            internFeedback: latestReport.internFeedback,
-            learningResources: latestReport.learningResources,
-            nextSteps: latestReport.nextSteps,
-            encouragementQuote: latestReport.encouragementQuote
-        });
+        res.status(200).json(latestReport);
     } catch (error) {
         console.error("🚨 MENTÖRLÜK RAPORU HATASI:", error);
         res.status(500).json({ error: "Mentörlük raporu alınamadı." });
     }
 };
 
+// Stajyer: Tüm Geçmiş Raporları Getirme (Veritabanındaki Tüm Alanlarla)
 exports.getMyMentorshipHistory = async (req, res) => {
     try {
         if (req.user.role !== 'INTERN') return res.status(403).json({ error: "Yetkiniz yok." });
 
+        const internId = parseInt(req.user?.userId || req.user?.id, 10);
+
         const reports = await prisma.aiReport.findMany({
-            where: { internId: req.user.userId },
-            orderBy: { reportDate: 'desc' },
-            take: 10,
-            select: { id: true, reportDate: true, overallScore: true, strengths: true, internSummary: true, encouragementQuote: true }
+            where: { internId: internId },
+            orderBy: { id: 'desc' },
+            take: 20
         });
+
         res.status(200).json(reports);
     } catch (error) {
         console.error("🚨 MENTÖRLÜK GEÇMİŞİ HATASI:", error);
@@ -145,13 +162,16 @@ exports.getMyMentorshipHistory = async (req, res) => {
     }
 };
 
+// Stajyer: Günlük İpucu
 exports.getDailyTip = async (req, res) => {
     try {
         if (req.user.role !== 'INTERN') return res.status(403).json({ error: "Sadece stajyerler için." });
 
+        const internId = parseInt(req.user?.userId || req.user?.id, 10);
+
         const latestReport = await prisma.aiReport.findFirst({
-            where: { internId: req.user.userId },
-            orderBy: { reportDate: 'desc' }
+            where: { internId: internId },
+            orderBy: { id: 'desc' }
         });
 
         if (!latestReport) {
@@ -169,6 +189,7 @@ exports.getDailyTip = async (req, res) => {
     }
 };
 
+// AI Chat Akışı
 exports.chat = async (req, res) => {
     try {
         const { message, messages } = req.body;
@@ -176,8 +197,10 @@ exports.chat = async (req, res) => {
 
         let context = {};
         if (req.user.role === 'INTERN') {
+            const internId = parseInt(req.user?.userId || req.user?.id, 10);
+
             const internData = await prisma.user.findUnique({
-                where: { id: req.user.userId },
+                where: { id: internId },
                 select: {
                     name: true, surname: true,
                     tasksReceived: {
@@ -185,7 +208,7 @@ exports.chat = async (req, res) => {
                         select: { title: true, status: true, deadline: true, repoLink: true },
                         orderBy: { deadline: 'asc' }
                     },
-                    archives: { select: { content: true, date: true }, orderBy: { date: 'desc' }, take: 5 },
+                    archiveEntries: { select: { mood: true, topicsCovered: true, challengesFaced: true, date: true }, orderBy: { date: 'desc' }, take: 5 },
                     logs: {
                         select: { loginTime: true, logoutTime: true },
                         where: { loginTime: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } },
@@ -193,7 +216,7 @@ exports.chat = async (req, res) => {
                     },
                     aiReports: {
                         select: { overallScore: true, strengths: true, internSummary: true, internFeedback: true, nextSteps: true, encouragementQuote: true, reportDate: true },
-                        orderBy: { reportDate: 'desc' }, take: 1
+                        orderBy: { id: 'desc' }, take: 1
                     }
                 }
             });
@@ -219,7 +242,10 @@ exports.chat = async (req, res) => {
             context = {
                 name: `${internData?.name || ''} ${internData?.surname || ''}`.trim(),
                 currentTasks: tasksWithUrgency,
-                recentArchives: (internData?.archives || []).map(a => ({ date: a.date, summary: a.content.substring(0, 200) })),
+                recentArchives: (internData?.archiveEntries || []).map(a => ({ 
+                    date: a.date, 
+                    summary: `Ruh Hali: ${a.mood || ''}. Konular: ${(a.topicsCovered || []).join(', ')}. Zorluklar: ${(a.challengesFaced || []).join(', ')}` 
+                })),
                 weeklyWorkedHours: Math.round(weeklyMinutes / 60),
                 weeklyWorkedMinutes: weeklyMinutes,
                 aiScore: latestReport?.overallScore || null,
@@ -249,5 +275,121 @@ exports.chat = async (req, res) => {
         if (!res.headersSent) {
             res.status(500).json({ error: "AI ile iletişim kurulamadı.", detail: error.response?.data?.detail || error.message });
         }
+    }
+};
+
+// Stajyer: Kalan Limit Bilgisi
+exports.getMyReportLimit = async (req, res) => {
+    try {
+        const internId = parseInt(req.user?.userId || req.user?.id, 10);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const reportCount = await prisma.aiReport.count({
+            where: {
+                internId: internId,
+                reportDate: { gte: today }
+            }
+        });
+
+        const limit = 3;
+        const remaining = Math.max(0, limit - reportCount);
+
+        res.status(200).json({ remaining, used: reportCount, limit });
+    } catch (error) {
+        console.error("🚨 Limit kontrol hatası:", error);
+        res.status(500).json({ error: "Limit bilgisi alınamadı." });
+    }
+};
+
+// Stajyer: Kendi AI Raporunu Üretme
+exports.generateMyReport = async (req, res) => {
+    const internId = parseInt(req.user?.userId || req.user?.id, 10);
+
+    if (isNaN(internId)) {
+        return res.status(400).json({ error: "Geçersiz kullanıcı kimliği." });
+    }
+
+    try {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const reportCount = await prisma.aiReport.count({
+            where: { internId: internId, reportDate: { gte: today } }
+        });
+
+        if (reportCount >= 3) {
+            return res.status(429).json({ error: "Günlük AI raporu oluşturma limitinize (3) ulaştınız. Lütfen yarın tekrar deneyin." });
+        }
+
+        const internData = await prisma.user.findUnique({
+            where: { id: internId },
+            select: {
+                id: true, name: true, surname: true,
+                tasksReceived: { select: { title: true, status: true, repoLink: true, deadline: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 20 },
+                archiveEntries: {
+                    select: {
+                        mood: true,
+                        topicsCovered: true,
+                        challengesFaced: true,
+                        socialInteractions: true,
+                        sentimentScore: true,
+                        date: true
+                    },
+                    orderBy: { date: 'desc' },
+                    take: 15
+                },
+                logs: { select: { loginTime: true, logoutTime: true }, orderBy: { loginTime: 'desc' }, take: 15 }
+            }
+        });
+
+        if (!internData || !internData.tasksReceived || internData.tasksReceived.length === 0) {
+            return res.status(400).json({ error: "Yapay zekanın analiz yapabilmesi için en az bir göreviniz olmalıdır." });
+        }
+
+        const PYTHON_SERVICE_URL = process.env.PYTHON_AI_SERVICE_URL || 'http://localhost:8000/analyze';
+        const payloadForAI = {
+            id: internData.id,
+            name: internData.name,
+            surname: internData.surname,
+            tasksReceived: internData.tasksReceived || [],
+            archives: (internData.archiveEntries || []).map(a => ({
+                date: a.date,
+                content: `Ruh Hali: ${a.mood || 'Bilinmiyor'}. Konular: ${(a.topicsCovered || []).join(', ')}. Zorluklar: ${(a.challengesFaced || []).join(', ')}`
+            })),
+            logs: internData.logs || []
+        };
+        
+        const aiResponse = await axios.post(PYTHON_SERVICE_URL, payloadForAI, { timeout: 180000 });
+        const analysisResult = aiResponse.data;
+
+        const newReport = await prisma.aiReport.create({
+            data: {
+                internId: internId,
+                reportDate: new Date(),
+                overallScore: analysisResult.overallScore || 70,
+                strengths: analysisResult.strengths || [],
+                weaknesses: analysisResult.weaknesses || [],
+                suggestions: analysisResult.suggestions || [],
+                adminSummary: analysisResult.adminSummary || 'Analiz tamamlandı.',
+                internSummary: analysisResult.internSummary || analysisResult.adminSummary || 'İyi gidiyorsun!',
+                internFeedback: analysisResult.internFeedback || 'Gelişmeye devam et.',
+                learningResources: Array.isArray(analysisResult.learningResources)
+                    ? analysisResult.learningResources.map(item => typeof item === 'object' ? `${item.title || 'Kaynak'} - ${item.url || ''}` : String(item))
+                    : [],
+                nextSteps: analysisResult.nextSteps || [],
+                encouragementQuote: analysisResult.encouragementQuote || 'Harika iş çıkarıyorsun!',
+                rawJson: analysisResult
+            }
+        });
+
+        res.status(201).json({ 
+            message: "AI Raporunuz başarıyla oluşturuldu!", 
+            report: newReport, 
+            remaining: 3 - (reportCount + 1) 
+        });
+
+    } catch (error) {
+        console.error("🚨 STAJYER AI RAPOR HATASI:", error.response?.data || error.message);
+        res.status(500).json({ error: "Yapay zeka analizi sırasında hata oluştu." });
     }
 };

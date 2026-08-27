@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useCallback } from 'react';
 import api from '../../api/axios';
-import { Archive, RotateCcw, Users, ArchiveRestore, Bot, Trash2,  } from 'lucide-react';
+import { Archive, RotateCcw, Users, ArchiveRestore, Bot, Trash2, UserPlus } from 'lucide-react';
 
 export default function Interns() {
     const [interns, setInterns] = useState([]);
@@ -10,6 +10,17 @@ export default function Interns() {
     const [loading, setLoading] = useState(true);
     const [isGenerating, setIsGenerating] = useState(null); // 🆕 AI rapor oluşturulurken hangi stajyer ID'si
     const navigate = useNavigate();
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [departments, setDepartments] = useState([]);
+    const [addForm, setAddForm] = useState({
+        name: '',
+        surname: '',
+        email: '',
+        password: '',
+        departmentId: ''
+    });
+    
 
     // 🎯 showSpinner=true → sadece butonlardan çağrılınca spinner aç
     const load = useCallback(async (showSpinner = false) => {
@@ -33,6 +44,18 @@ export default function Interns() {
         } finally {
             setLoading(false);
         }
+    }, []);
+
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const res = await api.get('/departments');
+                setDepartments(res.data);
+            } catch (error) {
+                console.error("Departmanlar getirilemedi:", error);
+            }
+        };
+        fetchDepartments();
     }, []);
 
     useEffect(() => {
@@ -71,6 +94,32 @@ export default function Interns() {
             load(true); // Listeyi yenile
         } catch (e) {
             alert(e.response?.data?.error || 'Silme işlemi başarısız');
+        }
+    };
+
+    const handleAddIntern = async (e) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        
+        try {
+            // Backend'deki register rotamıza istek atıyoruz[cite: 1]
+            await api.post('/auth/register', {
+                name: addForm.name.trim(),
+                surname: addForm.surname.trim(),
+                email: addForm.email.trim(),
+                password: addForm.password,
+                role: 'INTERN' ,
+                departmentId: addForm.departmentId ? parseInt(addForm.departmentId) : null
+            });
+            
+            setIsAddModalOpen(false);
+            setAddForm({ name: '', surname: '', email: '', password: '', departmentId: '' });
+            load(true); // Listeyi anında yenile
+            alert("✅ Stajyer başarıyla sisteme eklendi!");
+        } catch (error) {
+            alert("❌ Hata: " + (error.response?.data?.error || "Stajyer eklenemedi."));
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -115,6 +164,13 @@ export default function Interns() {
                 {/* Sekmeler */}
                 <div className="flex gap-2">
                     <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 bg-brand hover:bg-brand-light text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors shadow-lg"
+                    >
+                        <UserPlus size={18} />
+                        Yeni Stajyer Ekle
+                    </button>
+                    <button
                         onClick={() => setView('active')}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
                             view === 'active'
@@ -134,7 +190,7 @@ export default function Interns() {
                     >
                         <ArchiveRestore size={16} /> Arşiv ({archived.length})
                     </button>
-                </div>
+                </div>                
             </div>
 
             {/* Yükleniyor */}
@@ -343,6 +399,98 @@ export default function Interns() {
                     </table>
                 </div>
             )}
+        
+        {/* YENİ STAJYER EKLEME MODALI */}
+            {isAddModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-brand/10 rounded-lg text-brand-light">
+                                <UserPlus size={20} />
+                            </div>
+                            <h2 className="text-xl font-bold text-white">Yeni Stajyer Ekle</h2>
+                        </div>
+                        
+                        <form onSubmit={handleAddIntern} className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Ad</label>
+                                    <input 
+                                        type="text" required
+                                        value={addForm.name}
+                                        onChange={(e) => setAddForm({...addForm, name: e.target.value})}
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Soyad</label>
+                                    <input 
+                                        type="text" required
+                                        value={addForm.surname}
+                                        onChange={(e) => setAddForm({...addForm, surname: e.target.value})}
+                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">E-Posta</label>
+                                <input 
+                                    type="email" required
+                                    value={addForm.email}
+                                    onChange={(e) => setAddForm({...addForm, email: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Geçici Şifre</label>
+                                <input 
+                                    type="password" required minLength="6"
+                                    value={addForm.password}
+                                    onChange={(e) => setAddForm({...addForm, password: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-8">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsAddModalOpen(false)}
+                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                >
+                                    İptal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    disabled={isSubmitting}
+                                    className="flex-1 bg-brand hover:bg-brand-light text-white py-2.5 rounded-lg text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    {isSubmitting ? (
+                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                    ) : 'Kaydet'}
+                                </button>
+                            </div>
+                            <div>
+                                <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Departman (Opsiyonel)</label>
+                                <select 
+                                    value={addForm.departmentId}
+                                    onChange={(e) => setAddForm({...addForm, departmentId: e.target.value})}
+                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors appearance-none cursor-pointer"
+                                >
+                                    <option value="">Departman Seçin...</option>
+                                    {departments.map(dept => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
+                                        </option>
+                                    ))} 
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

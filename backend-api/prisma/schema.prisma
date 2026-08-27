@@ -29,8 +29,7 @@ model User {
   role           Role                @default(INTERN)
   createdAt      DateTime            @default(now())
   
-  // 🚀 YENİ ANONİM ARŞİV İLİŞKİSİ (Sadece bu kalacak)
-  archiveEntries DailyArchiveEntry[] @relation("InternArchiveEntries")  
+  archiveEntries     DailyArchiveEntry[] @relation("InternArchiveEntries")
 
   // SOFT DELETE
   isArchived     Boolean             @default(false)
@@ -90,13 +89,15 @@ model DailyLog {
 
   internId    Int
   intern      User      @relation("InternLogs", fields: [internId], references: [id], onDelete: Cascade)
+
+  nextDayTip   String?  
+  nextDayQuote String?
 }
 
 // 5. HAM METİN TUTMAYAN ANONİM GÜNLÜK İSTATİSTİK TABLOSU
 model DailyArchiveEntry {
   id                 Int      @id @default(autoincrement())
-  date               DateTime @default(now())
-  
+  date               DateTime @db.Date @default(now())
   internId           Int
   intern             User     @relation("InternArchiveEntries", fields: [internId], references: [id], onDelete: Cascade)
 

@@ -38,3 +38,7 @@ class DailyArchivePayload(BaseModel):
 
 class DailySummaryPayload(BaseModel):
     dailyContents: str
+
+class TipPayload(BaseModel):
+    internId: int
+    workedMinutes: int

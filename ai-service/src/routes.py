@@ -12,6 +12,39 @@ from .utils import extract_json_from_text
 
 router = APIRouter()
 
+@router.post("/generate-tip")
+async def generate_tip_endpoint(payload: TipPayload):
+    system_prompt = (
+        "Sen motive edici bir yazılım mentörüsün. Stajyer mesaisini bitirdi ve çıkış yaptı. "
+        "GÖREVİN: Stajyerin bir sonraki gün sisteme girdiğinde göreceği kısa bir sabah tavsiyesi ve motivasyon sözü üretmek. "
+        "Lütfen aşağıdaki JSON formatında cevap ver:\n"
+        '{"tip": "Yarın için 1-2 cümlelik tavsiye...", "quote": "İlham verici bir söz"}'
+    )
+    
+    try:
+        response = requests.post(
+            f"{OLLAMA_URL}/api/generate",
+            json={
+                "model": MODEL_NAME,
+                "prompt": f"Stajyer bugün {payload.workedMinutes} dakika çalıştı. Ona yarın için bir tavsiye ver.",
+                "system": system_prompt,
+                "stream": False,
+                "format": "json"
+            },
+            timeout=40
+        )
+        
+        result = response.json()
+        raw_text = result.get("response", "{}")
+        return extract_json_from_text(raw_text)
+        
+    except Exception as e:
+        print(f"❌ Tavsiye üretim hatası: {str(e)}")
+        return {
+            "tip": "Dün harika bir iş çıkardın, bugünkü görevlerine aynı odakla devam et!",
+            "quote": "Kod yazmak bisiklete binmek gibidir, ilerlemek için pedallamaya devam etmelisin."
+        }
+
 @router.post("/analyze")
 async def analyze_intern(payload: InternPayload):
     user_context = f"""
