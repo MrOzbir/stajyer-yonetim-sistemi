@@ -6,8 +6,8 @@ const prisma = require('../config/database');
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.GMAIL_USER, // .env dosyanıza ekleyin
-        pass: process.env.GMAIL_PASS  // .env dosyanıza ekleyin
+        user: process.env.SMTP_USER, // .env dosyanıza ekleyin
+        pass: process.env.SMTP_PASS  // .env dosyanıza ekleyin
     }
 });
 
@@ -60,7 +60,7 @@ const initTaskNotifier = () => {
                 // Eğer şartlara uyduysa ve mesaj oluştuysa Maili Gönder
                 if (subject && message) {
                     await transporter.sendMail({
-                        from: `"StajyerOS Mentör" <${process.env.GMAIL_USER}>`,
+                        from: `"Stajyer Yönetim Sistemi Mentör" <${process.env.GMAIL_USER}>`,
                         to: targetEmail,
                         subject: subject,
                         html: `<div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">

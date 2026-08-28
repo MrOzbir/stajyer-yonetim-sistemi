@@ -162,3 +162,37 @@ exports.deleteMessage = async (req, res) => {
         return res.status(500).json({ error: "Mesaj silinemedi." });
     }
 };
+
+// Okunmamış mesajları görüldü olarak işaretle
+exports.markAsRead = async (req, res) => {
+    try {
+        const senderId = parseInt(req.params.senderId, 10);
+        const receiverId = parseInt(req.user?.userId || req.user?.id, 10);
+
+        // Bana gelen ve henüz okunmamış mesajları güncelle
+        await prisma.message.updateMany({
+            where: {
+                senderId: senderId,
+                receiverId: receiverId,
+                isRead: false
+            },
+            data: {
+                isRead: true,
+                readAt: new Date()
+            }
+        });
+
+        // Socket üzerinden göndericiye görüldü bilgisini ilet
+        const io = req.app.get('io');
+        if (io) {
+            io.to(`user:${senderId}`).emit('messages_read', {
+                readerId: receiverId
+            });
+        }
+
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error("🚨 GÖRÜLDÜ İŞARETLEME HATASI:", error);
+        return res.status(500).json({ error: "Görüldü bilgisi güncellenemedi." });
+    }
+};

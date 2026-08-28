@@ -158,3 +158,25 @@ exports.getDailyTip = async (req, res) => {
         return res.status(500).json({ error: "Mentör tavsiyesi getirilemedi." });
     }
 };
+
+exports.forgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const result = await authService.forgotPassword(email);
+        res.json(result);
+    } catch (error) {
+        console.error("🚨 ŞİFRE SIFIRLAMA / MAİL HATASI:", error); // 👈 Gerçek hatayı terminalde görmek için eklendi
+        res.status(400).json({ error: error.message });
+    }
+};
+
+exports.resetPasswordWithToken = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        const result = await authService.resetPasswordWithToken(token, newPassword);
+        res.json(result);
+    } catch (error) {
+        console.error("🚨 ŞİFRE GÜNCELLEME HATASI:", error); // 👈 Gerçek hatayı terminalde görmek için eklendi
+        res.status(400).json({ error: error.message });
+    }
+};

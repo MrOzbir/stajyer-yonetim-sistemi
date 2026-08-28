@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:5001/api'
+    baseURL: 'http://192.168.1.41:5001/api',
 });
 
 // Her isteğe otomatik token ekle

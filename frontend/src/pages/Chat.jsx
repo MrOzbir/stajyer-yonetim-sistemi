@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import api from '../api/axios';
 import { useAuth } from '../context/AuthContext';
 import { useSocketContext } from '../context/SocketContext';
-import { Send, Circle, Pencil, Trash2, X } from 'lucide-react';
+import { Send, Circle, Pencil, Trash2, X, Check, CheckCheck } from 'lucide-react';
 
 export default function Chat() {
     const { user } = useAuth();
@@ -73,11 +73,12 @@ export default function Chat() {
         const handleNewMessage = (msg) => {
             const senderId = Number(msg.sender?.id || msg.senderId);
             const receiverId = Number(msg.receiver?.id || msg.receiverId);
-
+            const activeUserId = Number(selectedUser?.id);
+        
             const isCurrentChat =
                 (senderId === myId && receiverId === activeUserId) ||
                 (senderId === activeUserId && receiverId === myId);
-
+        
             if (isCurrentChat) {
                 setMessages((prev) => {
                     if (prev.some((m) => m.id === msg.id)) return prev;
@@ -183,6 +184,37 @@ export default function Chat() {
         return () => clearInterval(timer);
     }, []);
 
+        // 1. Seçili kullanıcı açıldığında VEYA açık sohbete yeni mesaj geldiğinde okundu işaretle
+    useEffect(() => {
+        if (!selectedUser?.id) return;
+
+        // Backend'e okundu bildirimi gönder
+        api.patch(`/messages/read/${selectedUser.id}`).catch(() => {});
+    }, [selectedUser?.id, messages.length]);
+
+    // 2. Socket üzerinden görüldü olayını dinle (Sağlamlaştırılmış ID kontrolü)
+    useEffect(() => {
+        if (!socket || !selectedUser) return;
+
+        const myId = Number(user?.id || user?.userId);
+        const activeUserId = Number(selectedUser.id);
+
+        const handleMessagesRead = (data) => {
+            // Mesajları okuyan kişi ekrandaki stajyer ise:
+            if (Number(data.readerId) === activeUserId) {
+                setMessages((prev) =>
+                    prev.map((m) => {
+                        const msgSenderId = Number(m.sender?.id || m.senderId);
+                        return msgSenderId === myId ? { ...m, isRead: true } : m;
+                    })
+                );
+            }
+        };
+
+        socket.on('messages_read', handleMessagesRead);
+        return () => socket.off('messages_read', handleMessagesRead);
+    }, [socket, selectedUser, user]);
+
     return (
         <div className="flex h-[calc(100vh-8rem)]">
             {/* Sol: Kullanıcı Listesi */}
@@ -281,10 +313,24 @@ export default function Chat() {
                                     <div key={msg.id} className={`flex flex-col ${isMine ? 'items-end' : 'items-start'}`}>
                                         <div className={`max-w-md px-4 py-2 rounded-2xl ${isMine ? 'bg-brand text-white rounded-br-sm' : 'bg-panel text-white rounded-bl-sm'}`}>
                                             <p className="text-sm">{msg.content}</p>
-                                            <div className={`text-xs mt-1 ${isMine ? 'text-white/60' : 'text-white/40'}`}>
-                                                {new Date(validDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                            
+                                            {/* 🕒 SAAT VE ASİMETRİK GÖRÜLDÜ İKONU ALANI */}
+                                            <div className={`text-xs mt-1 flex items-center gap-1 ${isMine ? 'justify-end text-white/60' : 'text-white/40'}`}>
+                                                <span>
+                                                    {new Date(validDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                                </span>
+
+                                                {/* 🔒 SADECE ADMİN KENDİ GÖNDERDİĞİ MESAJLARDA ÇİFT TIK GÖRÜR */}
+                                                {isMine && user?.role === 'ADMIN' && (
+                                                    msg.isRead ? (
+                                                        <CheckCheck size={14} className="text-blue-400" title="Görüldü" />
+                                                    ) : (
+                                                        <Check size={14} className="text-white/40" title="İletildi" />
+                                                    )
+                                                )}
                                             </div>
                                         </div>
+
                                         {canEdit && (
                                             <div className="flex gap-3 mt-1 mr-1 text-[10px] text-white/40">
                                                 <button
@@ -308,7 +354,7 @@ export default function Chat() {
                                 );
                             })}
                             <div ref={messagesEndRef} />
-                        </div>
+                    </div>
 
                         {editingMessage && (
                             <div className="px-4 py-2 bg-brand/20 text-brand-light text-xs flex justify-between items-center border-t border-white/5">

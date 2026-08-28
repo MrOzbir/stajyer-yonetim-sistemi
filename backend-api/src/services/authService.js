@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 const { formatToTurkeyTime, formatWorkDuration } = require('../utils/formatters');
+const crypto = require('crypto');
+const sendResetEmail = require('../utils/sendEmail');
 
 exports.register = async (data) => {
     const { name, surname, email, password, role, departmentId } = data;
@@ -116,3 +118,76 @@ exports.logout = async (userId, role) => {
         summary: `Bugün ${formatWorkDuration(workedMinutes)} boyunca sistemde oturum açıldı.`
     };
 };
+
+// 1. E-posta Gönderme Mantığı
+exports.forgotPassword = async (email) => {
+    if (!email) {
+        throw new Error("Lütfen bir e-posta adresi girin.");
+    }
+
+    // E-postayı temizle (küçük harf ve kenar boşluklarını sil)
+    const cleanEmail = email.trim().toLowerCase();
+
+    const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
+    if (!user) {
+        throw new Error("Bu e-posta adresine ait bir kullanıcı bulunamadı.");
+    }
+
+    // Güvenli rastgele token üret (32 byte hex)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 dakika geçerli
+
+    // Token'ı veritabanına kaydet
+    await prisma.user.update({
+        where: { id: user.id },
+        data: { resetToken, resetTokenExpiry }
+    });
+
+    // Sıfırlama bağlantısını oluştur (Slash temizliği dahil)
+    const rawClientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const clientUrl = rawClientUrl.replace(/\/$/, ''); // Sondaki slashtan arındır
+    const resetLink = `${clientUrl}/reset-password?token=${resetToken}`;
+
+    try {
+        await sendResetEmail(user.email, resetLink);
+        return { message: "Şifre sıfırlama bağlantısı e-posta adresinize gönderildi." };
+    } catch (mailError) {
+        console.error("🚨 NODEMAILER MAİL GÖNDERME HATASI:", mailError);
+        throw new Error(`E-posta servisi hatası: ${mailError.message}`);
+    }
+};
+
+// 2. Token ile Yeni Şifreyi Kaydetme
+const resetPasswordWithToken = async (token, newPassword) => {
+    if (!token || !newPassword) {
+        throw new Error("Token ve yeni şifre alanları zorunludur.");
+    }
+
+    const user = await prisma.user.findFirst({
+        where: {
+            resetToken: token,
+            resetTokenExpiry: { gt: new Date() } // Geçerlilik süresi dolmamış olmalı
+        }
+    });
+
+    if (!user) {
+        throw new Error("Geçersiz veya süresi dolmuş bağlantı.");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Şifreyi güncelle ve token bilgilerini temizle
+    await prisma.user.update({
+        where: { id: user.id },
+        data: {
+            password_hash: hashedPassword,
+            resetToken: null,
+            resetTokenExpiry: null
+        }
+    });
+
+    return { message: "Şifreniz başarıyla güncellendi." };
+};
+
+exports.resetPasswordWithToken = resetPasswordWithToken;
+exports.resetPassword = resetPasswordWithToken; // Controller farkı ihtimaline karşı alias

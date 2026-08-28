@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ShieldAlert, LogIn } from 'lucide-react';
 
@@ -34,7 +34,7 @@ export default function Login() {
                         <ShieldAlert size={26} className="text-white" />
                     </div>
                     <div>
-                        <h1 className="text-2xl font-bold">StajyerOS</h1>
+                        <h1 className="text-2xl font-bold">Stajyer Yönetim Sistemi</h1>
                         <p className="text-sm text-white/40">Stajyer Yönetim Sistemi</p>
                     </div>
                 </div>
@@ -53,7 +53,15 @@ export default function Login() {
                     </div>
 
                     <div>
-                        <label className="label-dark">Şifre</label>
+                        <div className="flex items-center justify-between mb-1">
+                            <label className="label-dark">Şifre</label>
+                            <Link 
+                                to="/forgot-password" 
+                                className="text-xs text-brand-light hover:underline transition-colors"
+                            >
+                                Şifremi Unuttum?
+                            </Link>
+                        </div>
                         <input
                             className="input-dark"
                             type="password"
@@ -77,7 +85,7 @@ export default function Login() {
                 </form>
 
                 <p className="text-center text-xs text-white/30 mt-6">
-                    © 2026 StajyerOS • AI Destekli Stajyer Yönetimi
+                    © 2026 Stajyer Yönetim Sistemi • AI Destekli Stajyer Yönetimi
                 </p>
             </div>
         </div>

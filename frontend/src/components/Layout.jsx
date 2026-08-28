@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-    ShieldAlert, LayoutDashboard, Users, Building2,
+    LayoutDashboard, Users, Building2,
     MessageSquare, Briefcase, GraduationCap, LogOut,
     BookOpenText
 } from 'lucide-react';
@@ -39,15 +39,20 @@ export default function Layout() {
         <div className="min-h-screen bg-night">
             {/* Sidebar */}
             <aside className="fixed left-0 top-0 h-full w-64 bg-panel border-r border-white/5 flex flex-col">
-                {/* Logo */}
-                <div className="flex items-center gap-3 p-5 border-b border-white/5">
-                    <div className="w-10 h-10 bg-brand rounded-lg flex items-center justify-center">
-                        <ShieldAlert size={22} className="text-white" />
+                {/* Logo Bölümü */}
+                <div className="flex items-center gap-3 p-4 border-b border-white/5">
+                    {/* Sabit kare kapsayıcı ve kırılmayı önleyen resim boyutu */}
+                    <div className="w-12 h-12 flex items-center justify-center shrink-0 self-center">
+                        <img 
+                            src="/SiteLogo.png" 
+                            alt="Stajyer Yönetim Sistemi Logo" 
+                            className="w-12 h-12 object-contain"
+                        />
                     </div>
-                    <div>
-                        <div className="font-bold leading-tight">StajyerOS</div>
-                        <div className="text-xs text-white/40">
-                            {user?.role === 'ADMIN' ? 'Yönetici Paneli' : 'Stajyer Paneli'}
+                    
+                    <div className="flex flex-col justify-center">
+                        <div className="text-base font-bold leading-snug text-white text-center">
+                            Stajyer Yönetim<br />Sistemi
                         </div>
                     </div>
                 </div>
@@ -55,7 +60,6 @@ export default function Layout() {
                 {/* Menü */}
                 <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
                     {links.map((link) => {
-                        // Mesajlar sekmesi mi kontrol edelim
                         const isChatLink = link.to.includes('/chat');
 
                         return (
@@ -76,7 +80,6 @@ export default function Layout() {
                                     <span>{link.label}</span>
                                 </div>
 
-                                {/* 🔴 Eğer bu link Mesajlar ise ve okunmamış varsa rozet göster */}
                                 {isChatLink && totalUnread > 0 && (
                                     <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white shadow-sm animate-pulse">
                                         {totalUnread}

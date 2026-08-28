@@ -9,15 +9,11 @@ const setupSocket = require('./src/config/socket');
 const PORT = process.env.PORT || 5001;
 const server = http.createServer(app);
 
-const summaryRoutes = require('./src/routes/summaryRoutes');
-
-// Mevcut rotaların altına ekleyin:
-app.use('/api/summaries', summaryRoutes);
-
-// Socket.io'yu başlat ve Express app'in içine ekle (Controller'lardan erişebilmek için)
+// Socket.io Kurulumu
 const io = setupSocket(server);
 app.set('io', io);
 
-server.listen(PORT, () => {
-    console.log(`🚀 HTTP + WebSocket sunucusu http://localhost:${PORT} adresinde ayağa kalktı.`);
+// '0.0.0.0' ile tüm yerel ağa ve mobile açık dinleme
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Sunucu http://0.0.0.0:${PORT} adresinde aktif!`);
 });

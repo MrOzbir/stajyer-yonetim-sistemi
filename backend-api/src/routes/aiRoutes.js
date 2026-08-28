@@ -16,4 +16,6 @@ router.post('/generate-report/:id', authenticateToken, roleMiddleware('ADMIN'), 
 router.get('/reports/:internId', authenticateToken, aiController.getReports);
 router.delete('/reports/:reportId', authenticateToken, roleMiddleware('ADMIN'), aiController.deleteReport);
 
+router.get('/my-mentorship', authenticateToken, aiController.getMyMentorship);
+
 module.exports = router;

@@ -8,12 +8,14 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import AdminDashboard from './pages/admin/Dashboard';
 import InternDashboard from './pages/intern/Dashboard';
 import InternDetail from './pages/admin/InternDetail';
 import { SocketProvider } from './context/SocketContext';
 import DailySummaries from './pages/admin/DailySummaries';
 import Archives from './pages/intern/Archives';
+import ResetPassword from './pages/ResetPassword';
 
 // 🆕 Giriş yapmış kullanıcı /login'e gelirse panele yönlendir
 function LoginRoute() {
@@ -24,7 +26,6 @@ function LoginRoute() {
     return <Login />;
 }
 
-
 export default function App() {
     return (
     
@@ -33,6 +34,8 @@ export default function App() {
             <BrowserRouter>
                 <Routes>
                     <Route path="/login" element={<LoginRoute />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
+                    <Route path="/reset-password" element={<ResetPassword />} />
 
                     {/* Admin Bölgesi */}
                     <Route element={<ProtectedRoute roles={['ADMIN']} />}>
@@ -41,7 +44,7 @@ export default function App() {
                             <Route path="summaries" element={<DailySummaries />} />
                             <Route path="interns" element={<Interns />} />
                             <Route path="departments" element={<Departments />} />
-                            <Route path="chat" element={<Chat />} />  {/* ✅ ComingSoon yerine */}
+                            <Route path="chat" element={<Chat />} />
                             <Route path="interns/:id" element={<InternDetail />} />
                         </Route>
                     </Route>
@@ -53,20 +56,9 @@ export default function App() {
                             <Route path="tasks" element={<Tasks />} />
                             <Route path="mentorship" element={<AiChat />} /> 
                             <Route path="chat" element={<Chat />} />
-                            <Route path="archives" element={<Archives />} /> {/* 👈 Bu satırı ekleyin */}
+                            <Route path="archives" element={<Archives />} />
                         </Route>
                     </Route>
-
-                    {/* Stajyer Bölgesi */}
-                    <Route element={<ProtectedRoute roles={['INTERN']} />}>
-                        <Route path="/intern" element={<Layout />}>
-                            <Route index element={<InternDashboard />} />
-                            <Route path="tasks" element={<Tasks />} />
-                            <Route path="mentorship" element={<AiChat />} /> 
-                            <Route path="chat" element={<Chat />} />
-                        </Route>
-                    </Route>
-
                     <Route path="*" element={<Navigate to="/login" replace />} />
                 </Routes>
             </BrowserRouter>

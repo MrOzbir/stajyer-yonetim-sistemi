@@ -50,6 +50,9 @@ model User {
   // DEPARTMAN İLİŞKİSİ
   departmentId   Int?
   department     Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
 }
 
 // 2. STAJYER PROFİLİ TABLOSU
@@ -128,8 +131,9 @@ model DailySummary {
 model Message {
   id          Int       @id @default(autoincrement())
   content     String    @db.Text
-  isRead      Boolean   @default(false)
   createdAt   DateTime  @default(now())
+  isRead     Boolean   @default(false)
+  readAt     DateTime?
   
   senderId    Int
   sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)

@@ -15,4 +15,6 @@ router.patch('/:id', authenticateToken, messageController.editMessage);
 // 4. Mesaj Sil (DELETE /api/messages/:id)
 router.delete('/:id', authenticateToken, messageController.deleteMessage);
 
+router.patch('/read/:senderId', authenticateToken, messageController.markAsRead);
+
 module.exports = router;
