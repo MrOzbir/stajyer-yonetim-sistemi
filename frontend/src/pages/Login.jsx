@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { HelpCircle, X } from 'lucide-react';
+import AsciiArt from '../components/AsciiArt';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -76,7 +77,12 @@ export default function Login() {
     }, []);
 
     return (
-        <div className="relative min-h-screen bg-night flex items-center justify-center p-4 overflow-hidden">
+        <div className="relative min-h-screen bg-night flex items-center justify-center lg:items-end lg:justify-end lg:pr-[10%] lg:pb-[10%] p-4 overflow-hidden">
+            
+            {/* Arka Plan ASCII Efekti */}
+            <div className="absolute inset-0 z-0">
+                <AsciiArt />
+            </div>
             
             {/* ✈️ Uçak Kalkış Katmanı (Transparan & Tam Ekran) */}
             {isTakingOff && (
@@ -94,7 +100,7 @@ export default function Login() {
             )}
 
             {/* Giriş Form Kartı */}
-            <div className="w-full max-w-md bg-panel p-8 rounded-xl border border-edge shadow-2xl relative z-10">
+            <div className="w-full max-w-md bg-panel/80 backdrop-blur-md p-8 rounded-xl border border-edge shadow-2xl relative z-10 lg:translate-x-[20%] lg:translate-y-[15%]">
                 <div className="text-center mb-6">
                     <h1 className="text-2xl font-bold text-snow">Stajyer Yönetim Sistemi</h1>
                     <p className="text-snow-faint text-sm mt-1">Lütfen hesabınıza giriş yapın</p>
