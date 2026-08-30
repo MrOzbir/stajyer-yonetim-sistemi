@@ -50,35 +50,35 @@ export default function ResetPassword() {
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-night p-4">
-            <div className="w-full max-w-md bg-panel border border-white/10 rounded-2xl p-6 shadow-2xl">
-                <h2 className="text-xl font-bold text-white mb-1 flex items-center gap-2">
+            <div className="w-full max-w-md bg-panel border border-edge rounded-2xl p-6 shadow-2xl">
+                <h2 className="text-xl font-bold text-snow mb-1 flex items-center gap-2">
                     <Lock className="text-brand-light" size={22} /> Yeni Şifre Belirleyin
                 </h2>
-                <p className="text-xs text-white/50 mb-6">Lütfen hesabınız için yeni bir şifre girin.</p>
+                <p className="text-xs text-snow-muted mb-6">Lütfen hesabınız için yeni bir şifre girin.</p>
 
                 {error && <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-lg">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Yeni Şifre</label>
+                        <label className="block text-xs font-semibold text-snow-muted mb-1">Yeni Şifre</label>
                         <input
                             type="password"
                             required
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-brand"
+                            className="w-full bg-overlay border border-edge rounded-lg p-2.5 text-xs text-snow outline-none focus:border-brand"
                             placeholder="••••••••"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-xs font-semibold text-white/70 mb-1">Yeni Şifre (Tekrar)</label>
+                        <label className="block text-xs font-semibold text-snow-muted mb-1">Yeni Şifre (Tekrar)</label>
                         <input
                             type="password"
                             required
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-brand"
+                            className="w-full bg-overlay border border-edge rounded-lg p-2.5 text-xs text-snow outline-none focus:border-brand"
                             placeholder="••••••••"
                         />
                     </div>

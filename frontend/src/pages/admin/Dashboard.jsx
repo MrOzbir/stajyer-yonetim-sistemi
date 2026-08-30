@@ -72,9 +72,9 @@ export default function AdminDashboard() {
 
     const cards = [
         { id: 'interns', label: 'Aktif Stajyer', value: stats?.interns, icon: <Users size={20} />, accent: 'text-brand-light bg-brand/15' },
-        { id: 'tasks', label: 'Toplam Görev', value: stats?.tasks, icon: <Briefcase size={20} />, accent: 'text-white bg-white/10' },
+        { id: 'tasks', label: 'Toplam Görev', value: stats?.tasks, icon: <Briefcase size={20} />, accent: 'text-white bg-overlay-hover' },
         { id: 'urgent', label: 'Acil Görev', value: stats?.urgent, icon: <AlertTriangle size={20} />, accent: 'text-red-400 bg-red-500/15' },
-        { id: 'depts', label: 'Departman', value: stats?.depts, icon: <Building2 size={20} />, accent: 'text-white bg-white/10' },
+        { id: 'depts', label: 'Departman', value: stats?.depts, icon: <Building2 size={20} />, accent: 'text-white bg-overlay-hover' },
     ];
 
     if (loading) {
@@ -89,7 +89,7 @@ export default function AdminDashboard() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold mb-1">Yönetici Dashboard</h1>
-                <p className="text-white/40 text-sm">Genel sistemin anlık özeti (Detaylar için kutulara tıklayın)</p>
+                <p className="text-snow-faint text-sm">Genel sistemin anlık özeti (Detaylar için kutulara tıklayın)</p>
             </div>
 
             {/* İSTATİSTİK KARTLARI */}
@@ -112,12 +112,12 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                     <div className="stat-value font-bold text-2xl">{c.value ?? '—'}</div>
-                                    <div className="text-sm text-white/50">{c.label}</div>
+                                    <div className="text-sm text-snow-muted">{c.label}</div>
                                 </div>
                             </div>
                             <ChevronRight 
                                 size={18} 
-                                className={`text-white/30 transition-transform duration-300 ${isSelected ? 'rotate-90 text-brand-light' : ''}`} 
+                                className={`text-snow-faint transition-transform duration-300 ${isSelected ? 'rotate-90 text-brand-light' : ''}`} 
                             />
                         </div>
                     );
@@ -126,12 +126,12 @@ export default function AdminDashboard() {
 
             {/* İNTERAKTİF ÖZET ALANI */}
             {activeSection && (
-                <div className="card p-5 border border-white/10 bg-panel/80 backdrop-blur-md rounded-xl shadow-2xl transition-all duration-300">
+                <div className="card p-5 border border-edge bg-panel/80 backdrop-blur-md rounded-xl shadow-2xl transition-all duration-300">
                     
-                    <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+                    <div className="flex items-center justify-between pb-4 mb-4 border-b border-edge">
                         <div className="flex items-center gap-2">
                             {cards.find(c => c.id === activeSection)?.icon}
-                            <h2 className="font-bold text-lg text-white">
+                            <h2 className="font-bold text-lg text-snow">
                                 {activeSection === 'interns' && 'Aktif Stajyerler Listesi'}
                                 {activeSection === 'tasks' && 'Görev Dağılımı ve Stajyer Özeti'}
                                 {activeSection === 'urgent' && 'Acil & Bekleyen Görevler'}
@@ -140,7 +140,7 @@ export default function AdminDashboard() {
                         </div>
                         <button 
                             onClick={() => setActiveSection(null)}
-                            className="p-1 rounded-lg text-white/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                            className="p-1 rounded-lg text-snow-faint hover:text-snow hover:bg-overlay-hover transition-colors cursor-pointer"
                         >
                             <X size={18} />
                         </button>
@@ -150,17 +150,17 @@ export default function AdminDashboard() {
                     {activeSection === 'interns' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                             {internsList.length === 0 ? (
-                                <p className="text-white/40 text-sm py-4">Kayıtlı aktif stajyer bulunmuyor.</p>
+                                <p className="text-snow-faint text-sm py-4">Kayıtlı aktif stajyer bulunmuyor.</p>
                             ) : (
                                 internsList.map((intern) => (
-                                    <div key={intern.id} className="p-3 bg-night/50 border border-white/5 rounded-lg flex items-center justify-between">
+                                    <div key={intern.id} className="p-3 bg-night/50 border border-edge rounded-lg flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold text-xs">
                                                 {intern.name?.[0]}{intern.surname?.[0]}
                                             </div>
                                             <div>
-                                                <p className="text-sm font-semibold text-white">{intern.name} {intern.surname}</p>
-                                                <p className="text-xs text-white/40">{intern.email}</p>
+                                                <p className="text-sm font-semibold text-snow">{intern.name} {intern.surname}</p>
+                                                <p className="text-xs text-snow-faint">{intern.email}</p>
                                             </div>
                                         </div>
                                         <span className="w-2.5 h-2.5 rounded-full bg-green-500 ring-4 ring-green-500/20" title="Aktif"></span>
@@ -174,15 +174,15 @@ export default function AdminDashboard() {
                     {activeSection === 'tasks' && (
                         <div className="space-y-3">
                             {internTaskMap.length === 0 ? (
-                                <p className="text-white/40 text-sm py-4">Henüz görevlendirilmiş stajyer bulunmuyor.</p>
+                                <p className="text-snow-faint text-sm py-4">Henüz görevlendirilmiş stajyer bulunmuyor.</p>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {internTaskMap.map((intern) => (
-                                        <div key={intern.id} className="p-4 bg-night/50 border border-white/5 rounded-xl space-y-3">
-                                            <div className="flex items-center justify-between pb-2 border-b border-white/5">
+                                        <div key={intern.id} className="p-4 bg-night/50 border border-edge rounded-xl space-y-3">
+                                            <div className="flex items-center justify-between pb-2 border-b border-edge">
                                                 <div className="flex items-center gap-2">
                                                     <User size={16} className="text-brand-light" />
-                                                    <span className="font-bold text-sm text-white">{intern.name} {intern.surname}</span>
+                                                    <span className="font-bold text-sm text-snow">{intern.name} {intern.surname}</span>
                                                 </div>
                                                 <span className="w-6 h-6 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center shadow-md">
                                                     {intern.taskCount}
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
                                             {intern.assignedTasks.length > 0 ? (
                                                 <div className="space-y-1.5">
                                                     {intern.assignedTasks.map((t) => (
-                                                        <div key={t.id} className="text-xs text-white/70 bg-white/5 px-2.5 py-1.5 rounded flex items-center justify-between">
+                                                        <div key={t.id} className="text-xs text-snow-muted bg-overlay px-2.5 py-1.5 rounded flex items-center justify-between">
                                                             <span className="truncate pr-2">• {t.title}</span>
                                                             <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
                                                                 t.status === 'COMPLETED' ? 'bg-green-500/20 text-green-300' : 'bg-blue-500/20 text-blue-300'
@@ -203,7 +203,7 @@ export default function AdminDashboard() {
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-white/30 italic">Atanmış aktif görev yok.</p>
+                                                <p className="text-xs text-snow-faint italic">Atanmış aktif görev yok.</p>
                                             )}
                                         </div>
                                     ))}
@@ -233,9 +233,9 @@ export default function AdminDashboard() {
                                                     <Clock size={16} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-semibold text-white">{task.title}</p>
+                                                    <p className="text-sm font-semibold text-snow">{task.title}</p>
                                                     <p className="text-xs text-red-400/80">
-                                                        Atanan Stajyer: <strong className="text-white">{internFullName}</strong>
+                                                        Atanan Stajyer: <strong className="text-snow">{internFullName}</strong>
                                                     </p>
                                                 </div>
                                             </div>
@@ -255,15 +255,15 @@ export default function AdminDashboard() {
                     {activeSection === 'depts' && (
                         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                             {deptsList.length === 0 ? (
-                                <p className="text-white/40 text-sm py-4">Departman kaydı bulunamadı.</p>
+                                <p className="text-snow-faint text-sm py-4">Departman kaydı bulunamadı.</p>
                             ) : (
                                 deptsList.map((d) => (
-                                    <div key={d.id} className="p-3.5 bg-night/50 border border-white/5 rounded-lg flex items-center justify-between">
+                                    <div key={d.id} className="p-3.5 bg-night/50 border border-edge rounded-lg flex items-center justify-between">
                                         <div className="flex items-center gap-2.5">
                                             <Building2 size={16} className="text-brand-light" />
-                                            <span className="font-semibold text-sm text-white">{d.name}</span>
+                                            <span className="font-semibold text-sm text-snow">{d.name}</span>
                                         </div>
-                                        <span className="text-xs text-white/50 bg-white/5 px-2 py-1 rounded">
+                                        <span className="text-xs text-snow-muted bg-overlay px-2 py-1 rounded">
                                             {d.interns?.length ?? 0} Stajyer
                                         </span>
                                     </div>

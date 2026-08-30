@@ -16,6 +16,7 @@ import { SocketProvider } from './context/SocketContext';
 import DailySummaries from './pages/admin/DailySummaries';
 import Archives from './pages/intern/Archives';
 import ResetPassword from './pages/ResetPassword';
+import { ThemeProvider } from './context/ThemeContext';
 
 // 🆕 Giriş yapmış kullanıcı /login'e gelirse panele yönlendir
 function LoginRoute() {
@@ -29,6 +30,7 @@ function LoginRoute() {
 export default function App() {
     return (
     
+    <ThemeProvider>
     <AuthProvider>
         <SocketProvider>
             <BrowserRouter>
@@ -64,5 +66,6 @@ export default function App() {
             </BrowserRouter>
         </SocketProvider>
     </AuthProvider>
+    </ThemeProvider>
     );
 }

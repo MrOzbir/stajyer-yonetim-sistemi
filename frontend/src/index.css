@@ -1,17 +1,43 @@
 @import "tailwindcss";
 
-/* ==========================================
-   🎨 STAJYER Yönetim Sistemi TASARIM SİSTEMİ
-   ========================================== */
+:root {
+  --theme-night: #f8f9fa;        /* Light mode bg */
+  --theme-panel: #ffffff;        /* Light mode card */
+  --theme-edge: rgba(0, 0, 0, 0.1);   /* Light mode border */
+  --theme-snow: #111827;         /* Light mode text */
+  --theme-snow-muted: rgba(17, 24, 39, 0.75); /* High contrast muted text */
+  --theme-snow-faint: rgba(17, 24, 39, 0.6);  /* High contrast faint text */
+  --theme-overlay: rgba(0, 0, 0, 0.05); /* Light hover overlay */
+  --theme-overlay-hover: rgba(0, 0, 0, 0.1);
+  --theme-text-muted: rgba(0, 0, 0, 0.6);
+}
+
+.dark {
+  --theme-night: #121212;        /* Sayfa arka planı */
+  --theme-panel: #1f1f1f;        /* Kart / sidebar */
+  --theme-edge: rgba(255, 255, 255, 0.05); /* Kenarlıklar */
+  --theme-snow: #ffffff;         /* Metin */
+  --theme-snow-muted: rgba(255, 255, 255, 0.7);
+  --theme-snow-faint: rgba(255, 255, 255, 0.4);
+  --theme-overlay: rgba(255, 255, 255, 0.05); /* Dark hover overlay */
+  --theme-overlay-hover: rgba(255, 255, 255, 0.1);
+  --theme-text-muted: rgba(255, 255, 255, 0.6);
+}
+
 @theme {
   /* Marka Paleti */
   --color-brand: #a01e27;        /* Ana kırmızı */
   --color-brand-light: #c8323c;  /* Hover durumu */
   --color-brand-dark: #7c161e;   /* Basılı durum */
-  --color-night: #121212;        /* Sayfa arka planı */
-  --color-panel: #1f1f1f;        /* Kart / sidebar */
-  --color-edge: #2c2c2c;         /* Kenarlıklar */
-  --color-snow: #ffffff;         /* Metin */
+  --color-night: var(--theme-night);
+  --color-panel: var(--theme-panel);
+  --color-edge: var(--theme-edge);
+  --color-snow: var(--theme-snow);
+  --color-snow-muted: var(--theme-snow-muted);
+  --color-snow-faint: var(--theme-snow-faint);
+  --color-overlay: var(--theme-overlay);
+  --color-overlay-hover: var(--theme-overlay-hover);
+  --color-text-muted: var(--theme-text-muted);
 }
 
 body {
@@ -30,16 +56,16 @@ body {
    ========================================== */
 @layer components {
   .card {
-    @apply bg-panel border border-white/5 rounded-xl p-5;
+    @apply bg-panel border border-edge rounded-xl p-5;
   }
   .btn-brand {
     @apply bg-brand hover:bg-brand-light active:bg-brand-dark text-white font-semibold rounded-lg px-4 py-2.5 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .input-dark {
-    @apply w-full bg-night border border-white/10 rounded-lg px-4 py-2.5 text-snow placeholder:text-white/30 focus:border-brand focus:outline-none transition-colors;
+    @apply w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-snow placeholder:text-text-muted focus:border-brand focus:outline-none transition-colors;
   }
   .label-dark {
-    @apply block text-sm text-white/60 mb-1.5;
+    @apply block text-sm text-text-muted mb-1.5;
   }
   .stat-value {
     @apply text-3xl font-bold;

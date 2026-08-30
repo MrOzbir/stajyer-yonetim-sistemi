@@ -25,7 +25,7 @@ export default function InternDashboard() {
         <div className="space-y-6">
             <div>
                 <h1 className="text-2xl font-bold mb-1">Merhaba! 👋</h1>
-                <p className="text-white/40 text-sm mb-6">Bugünün özeti ve AI mentöründen notlar</p>
+                <p className="text-snow-faint text-sm mb-6">Bugünün özeti ve AI mentöründen notlar</p>
             </div>
 
             {/* Günün İpucu */}
@@ -35,9 +35,9 @@ export default function InternDashboard() {
                         <Lightbulb size={18} className="text-brand-light" />
                         <span className="text-sm font-semibold text-brand-light">Günün Önerisi</span>
                     </div>
-                    <p className="text-white/80">{tip.tip}</p>
+                    <p className="text-snow">{tip.tip}</p>
                     {tip.quote && (
-                        <p className="text-xs text-white/40 italic mt-3">"{tip.quote}"</p>
+                        <p className="text-xs text-snow-faint italic mt-3">"{tip.quote}"</p>
                     )}
                 </div>
             )}
@@ -48,14 +48,14 @@ export default function InternDashboard() {
                     <div className="card flex flex-col items-center justify-center text-center">
                         <TrendingUp size={22} className="text-brand-light mb-2" />
                         <div className="stat-value text-brand-light">{mentorship.overallScore}</div>
-                        <div className="text-sm text-white/50">AI Performans Puanı</div>
+                        <div className="text-sm text-snow-muted">AI Performans Puanı</div>
                     </div>
                     <div className="card lg:col-span-2">
                         <div className="flex items-center gap-2 mb-2">
                             <Target size={18} className="text-brand-light" />
                             <span className="text-sm font-semibold">Mentörünün Özeti</span>
                         </div>
-                        <p className="text-white/80 text-sm leading-relaxed">{mentorship.internSummary}</p>
+                        <p className="text-snow text-sm leading-relaxed">{mentorship.internSummary}</p>
                     </div>
                 </div>
             )}

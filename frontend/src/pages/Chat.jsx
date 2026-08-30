@@ -221,12 +221,12 @@ export default function Chat() {
     return (
         <div className="flex h-[calc(100vh-8rem)]">
             {/* Sol: Kullanıcı Listesi */}
-            <div className="w-80 bg-panel border-r border-white/5 flex flex-col">
-                <div className="p-4 border-b border-white/5">
+            <div className="w-80 bg-panel border-r border-edge flex flex-col">
+                <div className="p-4 border-b border-edge">
                     <h2 className="font-bold">Mesajlar</h2>
                     <div className="flex items-center gap-2 mt-2 text-xs">
-                        <Circle size={8} className={connected ? 'text-green-500 fill-green-500' : 'text-white/30'} />
-                        <span className="text-white/50">{connected ? 'Bağlı' : 'Bağlı değil'}</span>
+                        <Circle size={8} className={connected ? 'text-green-500 fill-green-500' : 'text-snow-faint'} />
+                        <span className="text-snow-muted">{connected ? 'Bağlı' : 'Bağlı değil'}</span>
                     </div>
                 </div>
 
@@ -238,15 +238,15 @@ export default function Chat() {
                     )}
 
                     {!loading && users.length === 0 && (
-                        <div className="text-center py-8 text-white/40 text-sm">Konuşma yok</div>
+                        <div className="text-center py-8 text-snow-faint text-sm">Konuşma yok</div>
                     )}
 
                     {users.map((u) => (
                         <button
                             key={u.id}
                             onClick={() => handleUserClick(u)}
-                            className={`w-full flex items-center gap-3 p-4 hover:bg-white/5 transition-colors cursor-pointer ${
-                                selectedUser?.id === u.id ? 'bg-white/10' : ''
+                            className={`w-full flex items-center gap-3 p-4 hover:bg-overlay transition-colors cursor-pointer ${
+                                selectedUser?.id === u.id ? 'bg-overlay-hover' : ''
                             }`}
                         >
                             <div className="relative">
@@ -259,7 +259,7 @@ export default function Chat() {
                             </div>
                             <div className="flex-1 min-w-0 text-left">
                                 <div className="font-semibold truncate">{u.name} {u.surname}</div>
-                                <div className="text-xs text-white/40 truncate">
+                                <div className="text-xs text-snow-faint truncate">
                                     {onlineUsers.includes(Number(u.id)) ? 'Çevrimiçi' : 'Çevrimdışı'}
                                 </div>
                             </div>
@@ -276,7 +276,7 @@ export default function Chat() {
             {/* Sağ: Mesajlaşma Alanı */}
             <div className="flex-1 flex flex-col bg-night">
                 {!selectedUser ? (
-                    <div className="flex-1 flex items-center justify-center text-white/40">
+                    <div className="flex-1 flex items-center justify-center text-snow-faint">
                         <div className="text-center">
                             <Send size={48} className="mx-auto mb-4 opacity-20" />
                             <p>Bir konuşma seçin</p>
@@ -284,7 +284,7 @@ export default function Chat() {
                     </div>
                 ) : (
                     <>
-                        <div className="p-4 border-b border-white/5 bg-panel">
+                        <div className="p-4 border-b border-edge bg-panel">
                             <div className="flex items-center gap-3">
                                 <div className="relative">
                                     <div className="w-10 h-10 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold">
@@ -296,7 +296,7 @@ export default function Chat() {
                                 </div>
                                 <div>
                                     <div className="font-bold">{selectedUser.name} {selectedUser.surname}</div>
-                                    <div className="text-xs text-white/40">
+                                    <div className="text-xs text-snow-faint">
                                         {otherTyping ? 'Yazıyor...' : onlineUsers.includes(Number(selectedUser.id)) ? 'Çevrimiçi' : 'Çevrimdışı'}
                                     </div>
                                 </div>
@@ -318,7 +318,7 @@ export default function Chat() {
                                             <p className="text-sm">{msg.content}</p>
                                             
                                             {/* 🕒 SAAT VE ASİMETRİK GÖRÜLDÜ İKONU ALANI */}
-                                            <div className={`text-xs mt-1 flex items-center gap-1 ${isMine ? 'justify-end text-white/60' : 'text-white/40'}`}>
+                                            <div className={`text-xs mt-1 flex items-center gap-1 ${isMine ? 'justify-end text-snow-muted' : 'text-snow-faint'}`}>
                                                 <span>
                                                     {new Date(validDate).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                                 </span>
@@ -328,14 +328,14 @@ export default function Chat() {
                                                     msg.isRead ? (
                                                         <CheckCheck size={14} className="text-blue-400" title="Görüldü" />
                                                     ) : (
-                                                        <Check size={14} className="text-white/40" title="İletildi" />
+                                                        <Check size={14} className="text-snow-faint" title="İletildi" />
                                                     )
                                                 )}
                                             </div>
                                         </div>
 
                                         {canEdit && (
-                                            <div className="flex gap-3 mt-1 mr-1 text-[10px] text-white/40">
+                                            <div className="flex gap-3 mt-1 mr-1 text-[10px] text-snow-faint">
                                                 <button
                                                     onClick={() => {
                                                         setEditingMessage(msg);
@@ -360,15 +360,15 @@ export default function Chat() {
                     </div>
 
                         {editingMessage && (
-                            <div className="px-4 py-2 bg-brand/20 text-brand-light text-xs flex justify-between items-center border-t border-white/5">
+                            <div className="px-4 py-2 bg-brand/20 text-brand-light text-xs flex justify-between items-center border-t border-edge">
                                 <span>Mesaj düzenleniyor...</span>
-                                <button onClick={() => { setEditingMessage(null); setNewMessage(''); }} className="hover:text-white transition-colors">
+                                <button onClick={() => { setEditingMessage(null); setNewMessage(''); }} className="hover:text-snow transition-colors">
                                     <X size={14} />
                                 </button>
                             </div>
                         )}
 
-                        <div className="p-4 border-t border-white/5 bg-panel">
+                        <div className="p-4 border-t border-edge bg-panel">
                             <div className="flex gap-2">
                                 <input
                                     type="text"

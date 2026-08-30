@@ -86,7 +86,7 @@ export default function Departments() {
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold mb-1">Departmanlar</h1>
-                    <p className="text-white/40 text-sm">Ekipleri organize edin ve renklendirin</p>
+                    <p className="text-snow-faint text-sm">Ekipleri organize edin ve renklendirin</p>
                 </div>
                 <button onClick={openCreate} className="btn-brand flex items-center gap-2">
                     <Plus size={16} /> Yeni Departman
@@ -103,8 +103,8 @@ export default function Departments() {
             {/* Boş Durum */}
             {!loading && departments.length === 0 && (
                 <div className="card text-center py-16">
-                    <Building2 size={32} className="text-white/20 mx-auto mb-3" />
-                    <p className="text-white/40">Henüz departman yok. İlk departmanınızı oluşturun!</p>
+                    <Building2 size={32} className="text-snow-faint mx-auto mb-3" />
+                    <p className="text-snow-faint">Henüz departman yok. İlk departmanınızı oluşturun!</p>
                 </div>
             )}
 
@@ -112,7 +112,7 @@ export default function Departments() {
             {!loading && departments.length > 0 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                     {departments.map((dept) => (
-                        <div key={dept.id} className="card hover:border-white/15 transition-colors">
+                        <div key={dept.id} className="card hover:border-edge transition-colors">
                             {/* Üst: Renk + Ad + Aksiyonlar */}
                             <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-center gap-3">
@@ -120,11 +120,11 @@ export default function Departments() {
                                         className="w-10 h-10 rounded-lg flex items-center justify-center"
                                         style={{ backgroundColor: dept.color }}
                                     >
-                                        <Building2 size={20} className="text-white" />
+                                        <Building2 size={20} className="text-snow" />
                                     </div>
                                     <div>
                                         <div className="font-bold">{dept.name}</div>
-                                        <div className="text-xs text-white/40">
+                                        <div className="text-xs text-snow-faint">
                                             {dept.createdAt}
                                         </div>
                                     </div>
@@ -133,14 +133,14 @@ export default function Departments() {
                                     <button
                                         onClick={() => openEdit(dept)}
                                         title="Düzenle"
-                                        className="text-white/40 hover:text-white transition-colors cursor-pointer"
+                                        className="text-snow-faint hover:text-snow transition-colors cursor-pointer"
                                     >
                                         <Pencil size={16} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(dept)}
                                         title="Sil"
-                                        className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
+                                        className="text-snow-faint hover:text-brand-light transition-colors cursor-pointer"
                                     >
                                         <Trash2 size={16} />
                                     </button>
@@ -148,14 +148,14 @@ export default function Departments() {
                             </div>
 
                             {/* Açıklama */}
-                            <p className="text-sm text-white/60 mb-4 min-h-[40px]">
+                            <p className="text-sm text-snow-muted mb-4 min-h-[40px]">
                                 {dept.description || 'Açıklama eklenmemiş.'}
                             </p>
 
                             {/* Üye Sayısı */}
                             <div className="flex items-center gap-2 text-sm">
                                 <span
-                                    className="px-2.5 py-1 rounded-full text-xs font-semibold text-white"
+                                    className="px-2.5 py-1 rounded-full text-xs font-semibold text-snow"
                                     style={{ backgroundColor: dept.color }}
                                 >
                                     <Users size={12} className="inline mr-1 -mt-0.5" />
@@ -178,7 +178,7 @@ export default function Departments() {
                             </h2>
                             <button
                                 onClick={() => setModalOpen(false)}
-                                className="text-white/40 hover:text-white cursor-pointer"
+                                className="text-snow-faint hover:text-snow cursor-pointer"
                             >
                                 <X size={20} />
                             </button>
@@ -232,7 +232,7 @@ export default function Departments() {
 
                             <div className="flex gap-3 pt-2">
                                 <button type="button" onClick={() => setModalOpen(false)}
-                                    className="flex-1 px-4 py-2.5 rounded-lg bg-white/5 text-white/60 hover:text-white transition-colors cursor-pointer">
+                                    className="flex-1 px-4 py-2.5 rounded-lg bg-overlay text-snow-muted hover:text-snow transition-colors cursor-pointer">
                                     İptal
                                 </button>
                                 <button type="submit" disabled={saving} className="btn-brand flex-1">

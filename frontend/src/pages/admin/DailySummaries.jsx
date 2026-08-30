@@ -27,7 +27,7 @@ export default function DailySummaries() {
         <div className="space-y-6 max-w-5xl mx-auto">
             <div>
                 <h1 className="text-2xl font-bold mb-1">Stajyer Günlük Özetleri</h1>
-                <p className="text-white/40 text-sm">Yapay zeka tarafından derlenen anonim günlük raporlar</p>
+                <p className="text-snow-faint text-sm">Yapay zeka tarafından derlenen anonim günlük raporlar</p>
             </div>
 
             {loading ? (
@@ -35,18 +35,18 @@ export default function DailySummaries() {
                     <Loader2 size={32} className="text-brand animate-spin" />
                 </div>
             ) : summaries.length === 0 ? (
-                <div className="card text-center py-20 border border-white/5">
-                    <Bot size={48} className="mx-auto mb-4 text-white/20" />
-                    <p className="text-white/60">Henüz oluşturulmuş bir günlük özet bulunmuyor.</p>
-                    <p className="text-white/30 text-xs mt-2">Özetler her gün saat 12:00'de otomatik olarak derlenir.</p>
+                <div className="card text-center py-20 border border-edge">
+                    <Bot size={48} className="mx-auto mb-4 text-snow-faint" />
+                    <p className="text-snow-muted">Henüz oluşturulmuş bir günlük özet bulunmuyor.</p>
+                    <p className="text-snow-faint text-xs mt-2">Özetler her gün saat 12:00'de otomatik olarak derlenir.</p>
                 </div>
             ) : (
                 <div className="space-y-6">
                     {summaries.map((summary) => (
-                        <div key={summary.id} className="card border border-white/10 bg-panel/60 p-6 space-y-5">
+                        <div key={summary.id} className="card border border-edge bg-panel/60 p-6 space-y-5">
                             
                             {/* Tarih ve Genel Moral Başlığı */}
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-edge pb-4">
                                 <div className="flex items-center gap-2 text-brand-light font-bold">
                                     <Calendar size={18} />
                                     <span>
@@ -65,12 +65,12 @@ export default function DailySummaries() {
 
                             {/* Yönetici Özeti Paragrafı */}
                             {(summary.executiveSummary || summary.content) && (
-                                <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4">
-                                    <div className="flex items-center gap-2 text-white/90 font-semibold text-sm mb-2">
+                                <div className="bg-white/[0.02] border border-edge rounded-xl p-4">
+                                    <div className="flex items-center gap-2 text-snow font-semibold text-sm mb-2">
                                         <FileText size={16} className="text-brand-light" />
                                         <span>Yönetici Özeti</span>
                                     </div>
-                                    <p className="text-white/70 text-sm leading-relaxed whitespace-pre-wrap">
+                                    <p className="text-snow-muted text-sm leading-relaxed whitespace-pre-wrap">
                                         {summary.executiveSummary || summary.content}
                                     </p>
                                 </div>
@@ -85,7 +85,7 @@ export default function DailySummaries() {
                                         <div className="flex items-center gap-1.5 font-bold text-green-400">
                                             <CheckCircle2 size={14} /> Başarılar & Kazanımlar
                                         </div>
-                                        <ul className="list-disc list-inside space-y-1 text-white/70">
+                                        <ul className="list-disc list-inside space-y-1 text-snow-muted">
                                             {summary.achievements.map((item, idx) => <li key={idx}>{item}</li>)}
                                         </ul>
                                     </div>
@@ -97,7 +97,7 @@ export default function DailySummaries() {
                                         <div className="flex items-center gap-1.5 font-bold text-amber-400">
                                             <AlertCircle size={14} /> Karşılaşılan Zorluklar
                                         </div>
-                                        <ul className="list-disc list-inside space-y-1 text-white/70">
+                                        <ul className="list-disc list-inside space-y-1 text-snow-muted">
                                             {summary.challenges.map((item, idx) => <li key={idx}>{item}</li>)}
                                         </ul>
                                     </div>
@@ -109,7 +109,7 @@ export default function DailySummaries() {
                                         <div className="flex items-center gap-1.5 font-bold text-blue-400">
                                             <ThumbsUp size={14} /> Memnuniyetler
                                         </div>
-                                        <ul className="list-disc list-inside space-y-1 text-white/70">
+                                        <ul className="list-disc list-inside space-y-1 text-snow-muted">
                                             {summary.satisfactions.map((item, idx) => <li key={idx}>{item}</li>)}
                                         </ul>
                                     </div>
@@ -121,7 +121,7 @@ export default function DailySummaries() {
                                         <div className="flex items-center gap-1.5 font-bold text-red-400">
                                             <ThumbsDown size={14} /> Şikayet & İyileştirme Alanları
                                         </div>
-                                        <ul className="list-disc list-inside space-y-1 text-white/70">
+                                        <ul className="list-disc list-inside space-y-1 text-snow-muted">
                                             {summary.complaints.map((item, idx) => <li key={idx}>{item}</li>)}
                                         </ul>
                                     </div>

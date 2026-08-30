@@ -7,7 +7,7 @@ export default function ComingSoon({ title }) {
                 <Construction size={26} />
             </div>
             <h2 className="text-xl font-bold mb-1">{title}</h2>
-            <p className="text-white/40 text-sm">Bu sayfa çok yakında eklenecek. 🚧</p>
+            <p className="text-snow-faint text-sm">Bu sayfa çok yakında eklenecek. 🚧</p>
         </div>
     );
 }

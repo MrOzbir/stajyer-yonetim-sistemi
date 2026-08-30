@@ -34,7 +34,7 @@ export default function InternArchives() {
             {/* Sayfa Başlığı */}
             <div>
                 <h1 className="text-2xl font-bold mb-1">Günlük Arşiv</h1>
-                <p className="text-white/40 text-sm">Günün nasıl geçti? Neler öğrendin, nelerde zorlandın?</p>
+                <p className="text-snow-faint text-sm">Günün nasıl geçti? Neler öğrendin, nelerde zorlandın?</p>
             </div>
 
             {/* AI Mentör Geçici Not Alanı (Sadece gönderimden sonra görünür) */}
@@ -44,18 +44,18 @@ export default function InternArchives() {
                         <Sparkles size={20} className="text-brand-light" />
                         <h3 className="font-bold text-brand-light text-lg">Mentörünün Değerlendirmesi</h3>
                     </div>
-                    <p className="text-white/80 leading-relaxed text-sm">
+                    <p className="text-snow leading-relaxed text-sm">
                         {ephemeralNote}
                     </p>
-                    <p className="text-white/30 text-[10px] mt-4 italic">
+                    <p className="text-snow-faint text-[10px] mt-4 italic">
                         * Bu not sana özeldir ve sistemde kaydedilmez. Sayfadan ayrıldığında silinecektir.
                     </p>
                 </div>
             )}
 
             {/* Günlük Yazma Formu */}
-            <form onSubmit={handleSubmit} className="card p-0 overflow-hidden border-white/10">
-                <div className="flex items-center gap-2 p-4 border-b border-white/10 bg-night/30">
+            <form onSubmit={handleSubmit} className="card p-0 overflow-hidden border-edge">
+                <div className="flex items-center gap-2 p-4 border-b border-edge bg-night/30">
                     <BookOpen size={18} className="text-brand-light" />
                     <h2 className="font-bold text-base">Bugünün Notları</h2>
                 </div>
@@ -65,12 +65,12 @@ export default function InternArchives() {
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         placeholder="Sevgili günlük... (Şaka şaka, burası senin özgür alanın! Hislerini, teknik görevlerini, sosyalleşme durumunu veya şikayetlerini yazabilirsin. Unutma, bu yazılar yöneticilere sadece genel ve anonim bir özet olarak gidecek.)"
-                        className="w-full h-48 bg-black/20 border border-white/10 rounded-lg p-4 text-sm text-white focus:outline-none focus:border-brand/50 resize-none transition-colors"
+                        className="w-full h-48 bg-night border border-edge rounded-lg p-4 text-sm text-snow focus:outline-none focus:border-brand/50 resize-none transition-colors"
                         disabled={loading}
                     />
                 </div>
 
-                <div className="flex justify-end p-4 border-t border-white/10 bg-night/30">
+                <div className="flex justify-end p-4 border-t border-edge bg-night/30">
                     <button
                         type="submit"
                         disabled={loading || !content.trim()}

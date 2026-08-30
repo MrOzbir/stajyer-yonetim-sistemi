@@ -3,9 +3,10 @@ import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, Building2,
     MessageSquare, Briefcase, GraduationCap, LogOut,
-    BookOpenText
+    BookOpenText, Sun, Moon
 } from 'lucide-react';
 import { useSocketContext } from '../context/SocketContext';
+import { useTheme } from '../context/ThemeContext';
 
 const adminLinks = [
     { to: '/admin', end: true, label: 'Dashboard', icon: <LayoutDashboard size={18} /> },
@@ -26,6 +27,7 @@ export default function Layout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation(); // 🚀 Sayfa değişimlerini yakalamak için
+    const { theme, toggleTheme } = useTheme();
     const links = user?.role === 'ADMIN' ? adminLinks : internLinks;
 
     const handleLogout = async () => {
@@ -39,9 +41,9 @@ export default function Layout() {
     return (
         <div className="min-h-screen bg-night">
             {/* Sidebar */}
-            <aside className="fixed left-0 top-0 h-full w-64 bg-panel border-r border-white/5 flex flex-col z-20">
+            <aside className="fixed left-0 top-0 h-full w-64 bg-panel border-r border-edge flex flex-col z-20 transition-colors">
                {/* Logo Bölümü */}
-                <div className="flex items-center gap-3 p-4 border-b border-white/5">
+                <div className="flex items-center gap-3 p-4 border-b border-edge">
                     <div className="w-12 h-12 flex items-center justify-center shrink-0 self-center">
                         <img 
                             src="/favicon.png" 
@@ -59,7 +61,7 @@ export default function Layout() {
                         />
                     </div>
                     <div className="flex flex-col justify-center">
-                        <div className="text-base font-bold leading-snug text-white">
+                        <div className="text-base font-bold leading-snug text-snow">
                             Stajyer Yönetim<br />Sistemi
                         </div>
                     </div>
@@ -79,7 +81,7 @@ export default function Layout() {
                                     `flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all duration-150 ${
                                         isActive
                                             ? 'bg-brand/15 text-brand-light border-l-2 border-brand font-semibold translate-x-1'
-                                            : 'text-white/60 hover:bg-white/5 hover:text-white'
+                                            : 'text-text-muted hover:bg-overlay hover:text-snow'
                                     }`
                                 }
                             >
@@ -99,19 +101,26 @@ export default function Layout() {
                 </nav>
 
                 {/* Kullanıcı + Çıkış */}
-                <div className="p-3 border-t border-white/5">
+                <div className="p-3 border-t border-edge">
                     <div className="flex items-center gap-3 px-3 py-2">
-                        <div className="w-9 h-9 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold">
+                        <div className="w-9 h-9 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold shrink-0">
                             {user?.name?.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <div className="text-sm font-semibold truncate">{user?.name}</div>
-                            <div className="text-xs text-white/40">{user?.role}</div>
+                            <div className="text-sm font-semibold truncate text-snow">{user?.name}</div>
+                            <div className="text-xs text-text-muted truncate">{user?.role}</div>
                         </div>
+                        <button
+                            onClick={toggleTheme}
+                            title="Temayı Değiştir"
+                            className="text-text-muted hover:text-brand-light transition-colors cursor-pointer shrink-0"
+                        >
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
                         <button
                             onClick={handleLogout}
                             title="Çıkış Yap"
-                            className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
+                            className="text-text-muted hover:text-brand-light transition-colors cursor-pointer shrink-0"
                         >
                             <LogOut size={18} />
                         </button>

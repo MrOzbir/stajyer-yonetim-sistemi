@@ -158,7 +158,7 @@ export default function Interns() {
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold mb-1">Stajyerler</h1>
-                    <p className="text-white/40 text-sm">Tüm stajyerlerin performans özeti</p>
+                    <p className="text-snow-faint text-sm">Tüm stajyerlerin performans özeti</p>
                 </div>
 
                 {/* Sekmeler */}
@@ -175,7 +175,7 @@ export default function Interns() {
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
                             view === 'active'
                                 ? 'bg-brand text-white'
-                                : 'bg-panel text-white/60 hover:text-white border border-white/10'
+                                : 'bg-panel text-snow-muted hover:text-white border border-edge'
                         }`}
                     >
                         <Users size={16} /> Aktif ({interns.length})
@@ -185,7 +185,7 @@ export default function Interns() {
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
                             view === 'archived'
                                 ? 'bg-brand text-white'
-                                : 'bg-panel text-white/60 hover:text-white border border-white/10'
+                                : 'bg-panel text-snow-muted hover:text-white border border-edge'
                         }`}
                     >
                         <ArchiveRestore size={16} /> Arşiv ({archived.length})
@@ -202,7 +202,7 @@ export default function Interns() {
 
             {/* Boş Durum */}
             {!loading && list.length === 0 && (
-                <div className="card text-center py-16 text-white/40">
+                <div className="card text-center py-16 text-snow-faint">
                     {view === 'active' ? 'Aktif stajyer yok.' : 'Arşivde stajyer yok.'}
                 </div>
             )}
@@ -210,246 +210,248 @@ export default function Interns() {
             {/* Tablo */}
             {!loading && list.length > 0 && (
                 <div className="card p-0 overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead className="bg-night/60 text-white/50 text-xs uppercase tracking-wider">
-                            <tr>
-                                <th className="text-left px-5 py-3">Stajyer</th>
-                                <th className="text-left px-5 py-3">Departman</th>
-                                <th className="text-left px-5 py-3">Görevler</th>
-                                <th className="text-left px-5 py-3">AI Puanı</th>
-                                <th className="text-left px-5 py-3">Toplam Mesai</th>
-                                <th className="text-left px-5 py-3">Son Giriş</th>
-                                <th className="text-right px-5 py-3">İşlem</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-white/5">
-                            {list.map((intern) => (
-                                <tr 
-                                key={intern.id} 
-                                className="hover:bg-white/[0.03] transition-colors cursor-pointer"
-                                onClick={(e) => {
-                                    // 🚨 KESİN KORUMA: Eğer tıklanan yer bir buton veya butonun içindeki bir ikon ise yönlendirmeyi iptal et!
-                                    if (e.target.closest('button')) return;
-                                    
-                                    // Sadece boşluğa tıklandıysa detay sayfasına git
-                                    navigate(`/admin/interns/${intern.id}`);
-                                }}
-                                >
-                                    
-                                    {/* Stajyer */}
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-3">
-                                            <div className="relative shrink-0">
-                                                <div className="w-10 h-10 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold">
-                                                    {intern.name?.charAt(0)}
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-xs lg:text-sm">
+                            <thead className="bg-night/60 text-snow-muted text-xs uppercase tracking-wider">
+                                <tr>
+                                    <th className="text-left px-2 py-2.5 sm:px-3">Stajyer</th>
+                                    <th className="text-left px-2 py-2.5 sm:px-3">Departman</th>
+                                    <th className="text-left px-2 py-2.5 sm:px-3">Görevler</th>
+                                    <th className="text-left px-2 py-2.5 sm:px-3">AI Puanı</th>
+                                    <th className="text-left px-2 py-2.5 sm:px-3">Toplam Mesai</th>
+                                    <th className="text-left px-2 py-2.5 sm:px-3">Son Giriş</th>
+                                    <th className="text-right px-2 py-2.5 sm:px-3">İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-edge">
+                                {list.map((intern) => (
+                                    <tr 
+                                    key={intern.id} 
+                                    className="hover:bg-overlay transition-colors cursor-pointer"
+                                    onClick={(e) => {
+                                        // 🚨 KESİN KORUMA: Eğer tıklanan yer bir buton veya butonun içindeki bir ikon ise yönlendirmeyi iptal et!
+                                        if (e.target.closest('button')) return;
+                                        
+                                        // Sadece boşluğa tıklandıysa detay sayfasına git
+                                        navigate(`/admin/interns/${intern.id}`);
+                                    }}
+                                    >
+                                        
+                                        {/* Stajyer */}
+                                        <td className="px-2 py-3 sm:px-3">
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative shrink-0">
+                                                    <div className="w-10 h-10 rounded-full bg-brand/20 text-brand-light flex items-center justify-center font-bold">
+                                                        {intern.name?.charAt(0)}
+                                                    </div>
+                                                    {intern.isActiveNow && (
+                                                        <span
+                                                            className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-panel"
+                                                            title="Çevrimiçi"
+                                                        ></span>
+                                                    )}
                                                 </div>
-                                                {intern.isActiveNow && (
-                                                    <span
-                                                        className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-panel"
-                                                        title="Çevrimiçi"
-                                                    ></span>
+                                                <div className="min-w-0">
+                                                    <div className="font-semibold break-words whitespace-normal max-w-[120px] md:max-w-full">
+                                                        {intern.name} {intern.surname}
+                                                    </div>
+                                                    <div className="text-[10px] sm:text-xs text-snow-faint break-words whitespace-normal max-w-[120px] md:max-w-full">{intern.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    
+    
+                                        {/* Departman */}
+                                        <td className="px-2 py-3 sm:px-3">
+                                            {intern.department ? (
+                                                <span
+                                                    className="px-2.5 py-1 rounded-full text-xs font-medium text-snow whitespace-nowrap"
+                                                    style={{ backgroundColor: intern.department.color }}
+                                                >
+                                                    {intern.department.name}
+                                                </span>
+                                            ) : (
+                                                <span className="text-snow-faint text-xs">—</span>
+                                            )}
+                                        </td>
+    
+                                        {/* Görevler */}
+                                        <td className="px-2 py-3 sm:px-3">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <span className="font-semibold whitespace-nowrap">
+                                                    {intern.tasks.completed}/{intern.tasks.total}
+                                                </span>
+                                                {intern.tasks.urgent > 0 && (
+                                                    <span className="bg-brand/15 text-brand-light px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
+                                                        {intern.tasks.urgent} acil
+                                                    </span>
+                                                )}
+                                                {intern.tasks.overdue > 0 && (
+                                                    <span className="bg-brand text-white px-2 py-0.5 rounded text-xs font-semibold whitespace-nowrap">
+                                                        {intern.tasks.overdue} gecikmiş
+                                                    </span>
                                                 )}
                                             </div>
-                                            <div className="min-w-0">
-                                                <div className="font-semibold truncate">
-                                                    {intern.name} {intern.surname}
+                                        </td>
+    
+                                        {/* AI Puanı */}
+                                        <td className="px-2 py-3 sm:px-3">
+                                            {intern.ai ? (
+                                                <div className="w-24">
+                                                    <div className="flex justify-between text-xs mb-1">
+                                                        <span className="font-bold text-brand-light">{intern.ai.overallScore}</span>
+                                                        <span className="text-snow-faint">/100</span>
+                                                    </div>
+                                                    <div className="h-1.5 bg-overlay-hover rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-brand rounded-full"
+                                                            style={{ width: `${intern.ai.overallScore}%` }}
+                                                        ></div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs text-white/40 truncate">{intern.email}</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                
-
-                                    {/* Departman */}
-                                    <td className="px-5 py-4">
-                                        {intern.department ? (
-                                            <span
-                                                className="px-2.5 py-1 rounded-full text-xs font-medium text-white whitespace-nowrap"
-                                                style={{ backgroundColor: intern.department.color }}
-                                            >
-                                                {intern.department.name}
-                                            </span>
-                                        ) : (
-                                            <span className="text-white/30 text-xs">—</span>
-                                        )}
-                                    </td>
-
-                                    {/* Görevler */}
-                                    <td className="px-5 py-4">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                            <span className="font-semibold">
-                                                {intern.tasks.completed}/{intern.tasks.total}
-                                            </span>
-                                            {intern.tasks.urgent > 0 && (
-                                                <span className="bg-brand/15 text-brand-light px-2 py-0.5 rounded text-xs font-semibold">
-                                                    {intern.tasks.urgent} acil
-                                                </span>
-                                            )}
-                                            {intern.tasks.overdue > 0 && (
-                                                <span className="bg-brand text-white px-2 py-0.5 rounded text-xs font-semibold">
-                                                    {intern.tasks.overdue} gecikmiş
-                                                </span>
-                                            )}
-                                        </div>
-                                    </td>
-
-                                    {/* AI Puanı */}
-                                    <td className="px-5 py-4">
-                                        {intern.ai ? (
-                                            <div className="w-24">
-                                                <div className="flex justify-between text-xs mb-1">
-                                                    <span className="font-bold text-brand-light">{intern.ai.overallScore}</span>
-                                                    <span className="text-white/30">/100</span>
-                                                </div>
-                                                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden">
-                                                    <div
-                                                        className="h-full bg-brand rounded-full"
-                                                        style={{ width: `${intern.ai.overallScore}%` }}
-                                                    ></div>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <span className="text-white/30 text-xs">Rapor yok</span>
-                                        )}
-                                    </td>
-
-                                    {/* Mesai */}
-                                    <td className="px-5 py-4 text-white/70 whitespace-nowrap">
-                                        {intern.work.totalWorked}
-                                    </td>
-
-                                    {/* Son Giriş */}
-                                    <td className="px-5 py-4 text-white/50 text-xs whitespace-nowrap">
-                                        {intern.lastLogin || '—'}
-                                    </td>
-
-                                    {/* İşlemler */}
-                                    <td className="px-5 py-4 text-right">
-                                        <div className="flex items-center justify-end gap-2">
-                                            {/* 🤖 AI RAPOR BUTONU (sadece aktif stajyerler için) */}
-                                            {view === 'active' && (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation(); // Satıra tıklama olayını engeller
-                                                        generateAiReport(intern);
-                                                    }}
-                                                    disabled={isGenerating === intern.id}
-                                                    title="AI Performans Raporu Oluştur"
-                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                                                        isGenerating === intern.id
-                                                            ? 'bg-purple-600/30 text-purple-300 cursor-wait'
-                                                            : 'bg-purple-600 hover:bg-purple-700 text-white'
-                                                    }`}
-                                                >
-                                                    {isGenerating === intern.id ? (
-                                                        <>
-                                                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                                            Analiz...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <Bot size={14} />
-                                                            AI Rapor
-                                                        </>
-                                                    )}
-                                                </button>
-                                            )}
-
-                                            {/* Arşivle / Geri Yükle */}
-                                            {view === 'active' ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation(); // Satıra tıklama olayını engeller
-                                                        handleArchive(intern);
-                                                    }}
-                                                    title="Arşivle"
-                                                    className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
-                                                >
-                                                    <Archive size={18} />
-                                                </button>
                                             ) : (
-                                                <>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation(); // Satıra tıklama olayını engeller
-                                                        handleRestore(intern);
-                                                    }}
-                                                    title="Geri Yükle"
-                                                    className="text-white/40 hover:text-green-400 transition-colors cursor-pointer"
-                                                >
-                                                    <RotateCcw size={18} />
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleDelete(intern); // 🚨 Silme işlemi
-                                                    }}
-                                                    title="Kalıcı Olarak Sil"
-                                                    className="text-white/40 hover:text-red-500 transition-colors cursor-pointer"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            </>
+                                                <span className="text-snow-faint text-xs whitespace-nowrap">Rapor yok</span>
                                             )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                                        </td>
+    
+                                        {/* Mesai */}
+                                        <td className="px-2 py-3 sm:px-3 text-snow-muted">
+                                            {intern.work.totalWorked}
+                                        </td>
+    
+                                        {/* Son Giriş */}
+                                        <td className="px-2 py-3 sm:px-3 text-snow-muted text-[10px] sm:text-xs">
+                                            {intern.lastLogin || '—'}
+                                        </td>
+    
+                                        {/* İşlemler */}
+                                        <td className="px-2 py-3 sm:px-3 text-right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                {/* 🤖 AI RAPOR BUTONU (sadece aktif stajyerler için) */}
+                                                {view === 'active' && (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Satıra tıklama olayını engeller
+                                                            generateAiReport(intern);
+                                                        }}
+                                                        disabled={isGenerating === intern.id}
+                                                        title="AI Performans Raporu Oluştur"
+                                                        className={`flex items-center shrink-0 whitespace-nowrap gap-1 px-2 py-1.5 sm:px-3 rounded-lg text-[10px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                                                            isGenerating === intern.id
+                                                                ? 'bg-purple-600/30 text-purple-300 cursor-wait'
+                                                                : 'bg-purple-600 hover:bg-purple-700 text-white'
+                                                        }`}
+                                                    >
+                                                        {isGenerating === intern.id ? (
+                                                            <>
+                                                                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                                <span className="hidden sm:inline">Analiz...</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Bot size={14} />
+                                                                <span className="hidden sm:inline">AI Rapor</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                )}
+    
+                                                {/* Arşivle / Geri Yükle */}
+                                                {view === 'active' ? (
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Satıra tıklama olayını engeller
+                                                            handleArchive(intern);
+                                                        }}
+                                                        title="Arşivle"
+                                                        className="text-snow-faint hover:text-brand-light transition-colors cursor-pointer shrink-0"
+                                                    >
+                                                        <Archive size={18} />
+                                                    </button>
+                                                ) : (
+                                                    <>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation(); // Satıra tıklama olayını engeller
+                                                            handleRestore(intern);
+                                                        }}
+                                                        title="Geri Yükle"
+                                                        className="text-snow-faint hover:text-green-400 transition-colors cursor-pointer shrink-0"
+                                                    >
+                                                        <RotateCcw size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDelete(intern); // 🚨 Silme işlemi
+                                                        }}
+                                                        title="Kalıcı Olarak Sil"
+                                                        className="text-snow-faint hover:text-red-500 transition-colors cursor-pointer shrink-0"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
         
         {/* YENİ STAJYER EKLEME MODALI */}
             {isAddModalOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-edge p-6 shadow-2xl">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-brand/10 rounded-lg text-brand-light">
                                 <UserPlus size={20} />
                             </div>
-                            <h2 className="text-xl font-bold text-white">Yeni Stajyer Ekle</h2>
+                            <h2 className="text-xl font-bold text-snow">Yeni Stajyer Ekle</h2>
                         </div>
                         
                         <form onSubmit={handleAddIntern} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Ad</label>
+                                    <label className="block text-snow-muted text-xs font-medium mb-1.5 uppercase tracking-wider">Ad</label>
                                     <input 
                                         type="text" required
                                         value={addForm.name}
                                         onChange={(e) => setAddForm({...addForm, name: e.target.value})}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                        className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow outline-none focus:border-brand transition-colors"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Soyad</label>
+                                    <label className="block text-snow-muted text-xs font-medium mb-1.5 uppercase tracking-wider">Soyad</label>
                                     <input 
                                         type="text" required
                                         value={addForm.surname}
                                         onChange={(e) => setAddForm({...addForm, surname: e.target.value})}
-                                        className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                        className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow outline-none focus:border-brand transition-colors"
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">E-Posta</label>
+                                <label className="block text-snow-muted text-xs font-medium mb-1.5 uppercase tracking-wider">E-Posta</label>
                                 <input 
                                     type="email" required
                                     value={addForm.email}
                                     onChange={(e) => setAddForm({...addForm, email: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow outline-none focus:border-brand transition-colors"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Geçici Şifre</label>
+                                <label className="block text-snow-muted text-xs font-medium mb-1.5 uppercase tracking-wider">Geçici Şifre</label>
                                 <input 
                                     type="password" required minLength="6"
                                     value={addForm.password}
                                     onChange={(e) => setAddForm({...addForm, password: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow outline-none focus:border-brand transition-colors"
                                 />
                             </div>
 
@@ -457,7 +459,7 @@ export default function Interns() {
                                 <button 
                                     type="button" 
                                     onClick={() => setIsAddModalOpen(false)}
-                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                    className="flex-1 bg-overlay hover:bg-overlay-hover text-snow py-2.5 rounded-lg text-sm font-semibold transition-colors"
                                 >
                                     İptal
                                 </button>
@@ -472,11 +474,11 @@ export default function Interns() {
                                 </button>
                             </div>
                             <div>
-                                <label className="block text-white/60 text-xs font-medium mb-1.5 uppercase tracking-wider">Departman (Opsiyonel)</label>
+                                <label className="block text-snow-muted text-xs font-medium mb-1.5 uppercase tracking-wider">Departman (Opsiyonel)</label>
                                 <select 
                                     value={addForm.departmentId}
                                     onChange={(e) => setAddForm({...addForm, departmentId: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white outline-none focus:border-brand transition-colors appearance-none cursor-pointer"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow outline-none focus:border-brand transition-colors appearance-none cursor-pointer"
                                 >
                                     <option value="">Departman Seçin...</option>
                                     {departments.map(dept => (

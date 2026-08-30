@@ -8,13 +8,13 @@ const URGENCY_CONFIG = {
     critical: { label: 'Kritik', color: 'bg-brand/20 text-brand-light border border-brand/40', icon: <AlertTriangle size={14} /> },
     high: { label: 'Acil', color: 'bg-orange-500/20 text-orange-400 border border-orange-500/40', icon: <Clock size={14} /> },
     medium: { label: 'Orta', color: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40', icon: <Clock size={14} /> },
-    low: { label: 'Normal', color: 'bg-white/10 text-white/60', icon: <Clock size={14} /> },
-    none: { label: 'Deadline Yok', color: 'bg-white/5 text-white/30', icon: null }
+    low: { label: 'Normal', color: 'bg-overlay-hover text-snow-muted', icon: <Clock size={14} /> },
+    none: { label: 'Deadline Yok', color: 'bg-overlay text-snow-faint', icon: null }
 };
 
 // Durum etiketleri
 const STATUS_CONFIG = {
-    PENDING: { label: 'Bekliyor', color: 'text-white/50', icon: <Circle size={16} className="text-white/50" /> },
+    PENDING: { label: 'Bekliyor', color: 'text-snow-muted', icon: <Circle size={16} className="text-snow-muted" /> },
     IN_PROGRESS: { label: 'Devam Ediyor', color: 'text-blue-400', icon: <Play size={16} className="text-blue-400" /> },
     COMPLETED: { label: 'Tamamlandı', color: 'text-green-400', icon: <CheckCircle2 size={16} className="text-green-400" /> }
 };
@@ -123,7 +123,7 @@ export default function Tasks() {
             <div className="flex items-center justify-between mb-6">
                 <div>
                     <h1 className="text-2xl font-bold mb-1">Görevlerim</h1>
-                    <p className="text-white/40 text-sm">Size atanan tüm görevler ve durumları</p>
+                    <p className="text-snow-faint text-sm">Size atanan tüm görevler ve durumları</p>
                 </div>
                 
                 {user?.role === 'ADMIN' && tasks.length > 0 && (
@@ -135,7 +135,7 @@ export default function Tasks() {
                         className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors cursor-pointer ${
                             isSelectMode 
                                 ? 'bg-brand/20 text-brand-light border border-brand/30' 
-                                : 'bg-white/5 text-white/50 hover:bg-white/10'
+                                : 'bg-overlay text-snow-muted hover:bg-overlay-hover'
                         }`}
                     >
                         <ListChecks size={16} />
@@ -147,27 +147,27 @@ export default function Tasks() {
             {/* İstatistik Kartları */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="card">
-                    <div className="text-sm text-white/50 mb-1">Toplam</div>
+                    <div className="text-sm text-snow-muted mb-1">Toplam</div>
                     <div className="stat-value">{stats.total}</div>
                 </div>
                 <div className="card">
-                    <div className="text-sm text-white/50 mb-1">Tamamlanan</div>
+                    <div className="text-sm text-snow-muted mb-1">Tamamlanan</div>
                     <div className="stat-value text-green-400">{stats.completed}</div>
                 </div>
                 <div className="card">
-                    <div className="text-sm text-white/50 mb-1">Devam Eden</div>
+                    <div className="text-sm text-snow-muted mb-1">Devam Eden</div>
                     <div className="stat-value text-blue-400">{stats.inProgress}</div>
                 </div>
                 <div className="card">
-                    <div className="text-sm text-white/50 mb-1">Gecikmiş</div>
+                    <div className="text-sm text-snow-muted mb-1">Gecikmiş</div>
                     <div className="stat-value text-brand-light">{stats.overdue}</div>
                 </div>
             </div>
 
             {/* 🚀 TOPLU İŞLEM BARI (Sadece Seçim Modu Açıkken Görünür) */}
             {isSelectMode && user?.role === 'ADMIN' && tasks.length > 0 && (
-                <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-white/10 mb-4">
-                    <span className="text-sm text-white/60 font-semibold">
+                <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-edge mb-4">
+                    <span className="text-sm text-snow-muted font-semibold">
                         {selectedTasks.length} görev seçildi
                     </span>
                     <button
@@ -189,7 +189,7 @@ export default function Tasks() {
 
             {/* Boş Durum */}
             {!loading && tasks.length === 0 && (
-                <div className="card text-center py-16 text-white/40">
+                <div className="card text-center py-16 text-snow-faint">
                     Henüz size atanmış görev yok.
                 </div>
             )}
@@ -203,7 +203,7 @@ export default function Tasks() {
                         const isUpdating = updatingId === task.id;
 
                         return (
-                            <div key={task.id} className="card hover:border-white/15 transition-colors relative flex flex-col">
+                            <div key={task.id} className="card hover:border-edge transition-colors relative flex flex-col">
                                 
                                 {/* Üst: Checkbox, Durum, Aciliyet ve Kontroller */}
                                 <div className="flex items-center justify-between mb-3">
@@ -246,14 +246,14 @@ export default function Tasks() {
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
                                                     title="Görevi Düzenle"
-                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-brand/20 text-white/50 hover:text-brand-light transition-colors cursor-pointer"
+                                                    className="flex items-center justify-center w-7 h-7 rounded bg-overlay hover:bg-brand/20 text-snow-muted hover:text-brand-light transition-colors cursor-pointer"
                                                 >
                                                     <Pencil size={12} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
                                                     title="Görevi Sil"
-                                                    className="flex items-center justify-center w-7 h-7 rounded bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 transition-colors cursor-pointer"
+                                                    className="flex items-center justify-center w-7 h-7 rounded bg-overlay hover:bg-red-500/20 text-snow-muted hover:text-red-400 transition-colors cursor-pointer"
                                                 >
                                                     <Trash2 size={12} />
                                                 </button>
@@ -269,10 +269,10 @@ export default function Tasks() {
                                                 }}
                                                 disabled={isUpdating}
                                                 title="İşlemi Geri Al"
-                                                className="flex items-center justify-center w-5 h-5 rounded bg-white/5 hover:bg-white/15 text-white/50 hover:text-white transition-colors disabled:opacity-50 cursor-pointer"
+                                                className="flex items-center justify-center w-5 h-5 rounded bg-overlay hover:bg-overlay-hover text-snow-muted hover:text-snow transition-colors disabled:opacity-50 cursor-pointer"
                                             >
                                                 {isUpdating ? (
-                                                    <div className="w-2.5 h-2.5 border-[1.5px] border-white/30 border-t-white rounded-full animate-spin"></div>
+                                                    <div className="w-2.5 h-2.5 border-[1.5px] border-edge border-t-white rounded-full animate-spin"></div>
                                                 ) : (
                                                     <span className="text-[10px] leading-none">↩</span>
                                                 )}
@@ -285,7 +285,7 @@ export default function Tasks() {
                                 <h3 className="font-bold text-lg mb-2">{task.title}</h3>
 
                                 {/* Açıklama */}
-                                <p className="text-sm text-white/60 mb-4 line-clamp-2">
+                                <p className="text-sm text-snow-muted mb-4 line-clamp-2">
                                     {task.description || 'Açıklama yok.'}
                                 </p>
 
@@ -304,8 +304,8 @@ export default function Tasks() {
                                     return (
                                         <div className="flex flex-col gap-2 mb-4">
                                             <div className="flex items-center gap-2 text-sm">
-                                                <Clock size={14} className="text-white/40" />
-                                                <span className="text-white/60">Deadline:</span>
+                                                <Clock size={14} className="text-snow-faint" />
+                                                <span className="text-snow-muted">Deadline:</span>
                                                 <span className="font-semibold">
                                                     {deadlineDate.toLocaleDateString('tr-TR')}
                                                 </span>
@@ -353,7 +353,7 @@ export default function Tasks() {
                                                 handleRepoLink(task);
                                             }}
                                             disabled={isUpdating}
-                                            className="text-sm text-white/40 hover:text-brand-light transition-colors cursor-pointer disabled:opacity-50"
+                                            className="text-sm text-snow-faint hover:text-brand-light transition-colors cursor-pointer disabled:opacity-50"
                                         >
                                             + Repo linki ekle
                                         </button>
@@ -403,36 +403,36 @@ export default function Tasks() {
             {/* GÖREV DÜZENLEME MODALI */}
             {editingTask && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
-                        <h2 className="text-xl font-bold text-white mb-4">Görevi Düzenle</h2>
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-edge p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold text-snow mb-4">Görevi Düzenle</h2>
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Görev Başlığı</label>
+                                <label className="block text-snow-muted text-sm mb-1">Görev Başlığı</label>
                                 <input 
                                     type="text" required value={editingTask.title}
                                     onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Görev Detayı</label>
+                                <label className="block text-snow-muted text-sm mb-1">Görev Detayı</label>
                                 <textarea 
                                     required value={editingTask.description || ''}
                                     onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white min-h-[100px] outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow min-h-[100px] outline-none focus:border-brand"
                                 />
                             </div>
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Teslim Tarihi</label>
+                                <label className="block text-snow-muted text-sm mb-1">Teslim Tarihi</label>
                                 <input 
                                     type="date" 
                                     value={editingTask.deadline ? new Date(editingTask.deadline).toISOString().split('T')[0] : ''}
                                     onChange={(e) => setEditingTask({...editingTask, deadline: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                 />
                             </div>
                             <div className="flex gap-3 mt-6">
-                                <button type="button" onClick={() => setEditingTask(null)} className="flex-1 bg-white/5 hover:bg-white/10 py-2 rounded-lg font-semibold transition-colors">İptal</button>
+                                <button type="button" onClick={() => setEditingTask(null)} className="flex-1 bg-overlay hover:bg-overlay-hover py-2 rounded-lg font-semibold transition-colors">İptal</button>
                                 <button type="submit" className="flex-1 bg-brand hover:bg-brand-light text-white py-2 rounded-lg font-semibold transition-colors">Güncelle</button>
                             </div>
                         </form>

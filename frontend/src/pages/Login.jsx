@@ -94,28 +94,28 @@ export default function Login() {
             )}
 
             {/* Giriş Form Kartı */}
-            <div className="w-full max-w-md bg-panel p-8 rounded-xl border border-white/10 shadow-2xl relative z-10">
+            <div className="w-full max-w-md bg-panel p-8 rounded-xl border border-edge shadow-2xl relative z-10">
                 <div className="text-center mb-6">
-                    <h1 className="text-2xl font-bold text-white">Stajyer Yönetim Sistemi</h1>
-                    <p className="text-white/40 text-sm mt-1">Lütfen hesabınıza giriş yapın</p>
+                    <h1 className="text-2xl font-bold text-snow">Stajyer Yönetim Sistemi</h1>
+                    <p className="text-snow-faint text-sm mt-1">Lütfen hesabınıza giriş yapın</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-white/60 text-sm mb-1">E-posta</label>
+                        <label className="block text-snow-muted text-sm mb-1">E-posta</label>
                         <input
                             type="email"
                             required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full bg-night border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-brand"
+                            className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-snow outline-none focus:border-brand"
                             placeholder="ornek@sirket.com"
                         />
                     </div>
 
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <label className="block text-white/60 text-sm">Şifre</label>
+                            <label className="block text-snow-muted text-sm">Şifre</label>
                             <button
                                 type="button"
                                 onClick={() => setShowForgotModal(true)}
@@ -129,7 +129,7 @@ export default function Login() {
                             required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full bg-night border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-brand"
+                            className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-snow outline-none focus:border-brand"
                             placeholder="••••••••"
                         />
                     </div>
@@ -147,10 +147,10 @@ export default function Login() {
             {/* 🔑 Şifremi Unuttum Modalı */}
             {showForgotModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-panel border border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative">
+                    <div className="bg-panel border border-edge w-full max-w-sm rounded-2xl shadow-2xl p-6 relative">
                         <button
                             onClick={() => setShowForgotModal(false)}
-                            className="absolute top-4 right-4 text-white/40 hover:text-white"
+                            className="absolute top-4 right-4 text-snow-faint hover:text-snow"
                         >
                             <X size={18} />
                         </button>
@@ -158,14 +158,14 @@ export default function Login() {
                             <div className="p-2 bg-brand/20 text-brand-light rounded-lg">
                                 <HelpCircle size={20} />
                             </div>
-                            <h3 className="font-bold text-white text-base">Şifre Sıfırlama</h3>
+                            <h3 className="font-bold text-snow text-base">Şifre Sıfırlama</h3>
                         </div>
-                        <p className="text-xs text-white/70 leading-relaxed">
+                        <p className="text-xs text-snow-muted leading-relaxed">
                             Güvenlik protokolü gereği lütfen sistem yöneticiniz (Admin) ile iletişime geçin.
                         </p>
                         <button
                             onClick={() => setShowForgotModal(false)}
-                            className="w-full mt-5 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 rounded-lg text-xs transition-colors"
+                            className="w-full mt-5 bg-overlay-hover hover:bg-overlay-hover text-snow font-semibold py-2 rounded-lg text-xs transition-colors"
                         >
                             Anladım
                         </button>

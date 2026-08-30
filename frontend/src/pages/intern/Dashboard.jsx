@@ -143,7 +143,7 @@ export default function InternDashboard() {
             <div className="shrink-0 flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <h1 className="text-xl font-bold">Merhaba, {user?.name}! 👋</h1>
-                    <p className="text-white/40 text-xs hidden sm:block">• Bugünün bildirimleri ve AI mentöründen notlar</p>
+                    <p className="text-snow-faint text-xs hidden sm:block">• Bugünün bildirimleri ve AI mentöründen notlar</p>
                 </div>
                 
                 <button
@@ -162,29 +162,29 @@ export default function InternDashboard() {
                 <div className="flex-1 flex flex-col min-h-0 space-y-4">
                     
                     {/* ÜST BAR: Performans Analizi */}
-                    <div className="shrink-0 flex items-center justify-between bg-gradient-to-r from-night to-panel p-3.5 rounded-xl border border-white/10 shadow-lg">
+                    <div className="shrink-0 flex items-center justify-between bg-gradient-to-r from-night to-panel p-3.5 rounded-xl border border-edge shadow-lg">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-brand/10 rounded-lg">
                                 <Bot size={18} className="text-brand-light" />
                             </div>
                             <div>
-                                <h3 className="font-bold text-white text-sm">Anlık Performans Analizi</h3>
-                                <p className="text-[11px] text-white/50">Güncel durumunuzun detaylı analizini isteyin.</p>
+                                <h3 className="font-bold text-snow text-sm">Anlık Performans Analizi</h3>
+                                <p className="text-[11px] text-snow-muted">Güncel durumunuzun detaylı analizini isteyin.</p>
                             </div>
                         </div>
                         
                         <div className="relative group flex items-center gap-3 sm:gap-4">
                             <div className="text-right hidden sm:block">
-                                <div className="text-[10px] text-white/40 uppercase tracking-wider">LİMİT</div>
+                                <div className="text-[10px] text-snow-faint uppercase tracking-wider">LİMİT</div>
                                 <div className="font-bold text-sm flex items-baseline gap-1">
                                     <span className={limitInfo.remaining > 0 ? "text-green-400" : "text-red-400"}>{limitInfo.remaining}</span>
-                                    <span className="text-xs text-white/30">/ {limitInfo.limit}</span>
+                                    <span className="text-xs text-snow-faint">/ {limitInfo.limit}</span>
                                 </div>
                             </div>
 
                             <button
                                 onClick={handleOpenHistoryModal}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-lg text-xs font-semibold border border-white/10 transition-all shadow-sm cursor-pointer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-overlay-hover hover:bg-overlay-hover text-snow hover:text-snow rounded-lg text-xs font-semibold border border-edge transition-all shadow-sm cursor-pointer"
                                 title="Geçmiş AI Raporlarını Gör"
                             >
                                 <FileText size={14} className="text-brand-light" />
@@ -196,22 +196,22 @@ export default function InternDashboard() {
                                 disabled={generating || limitInfo.remaining === 0}
                                 className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                     generating || limitInfo.remaining === 0
-                                        ? 'bg-white/5 text-white/30 cursor-not-allowed'
+                                        ? 'bg-overlay text-snow-faint cursor-not-allowed'
                                         : 'bg-brand hover:bg-brand-light text-white shadow-lg'
                                 }`}
                             >
                                 {generating ? 'Analiz...' : 'Rapor Oluştur'}
                             </button>
 
-                            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-night/95 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 backdrop-blur-md">
+                            <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-night/95 border border-edge rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 backdrop-blur-md">
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-brand-light mb-1">
                                     <Info size={14} />
                                     <span>Sistem Yük Limiti</span>
                                 </div>
-                                <p className="text-[11px] text-white/70 leading-relaxed">
-                                    Sunucu performansını korumak ve yapay zeka servislerinin aşırı yüklenmesini önlemek amacıyla günlük rapor oluşturma hakkınız <strong className="text-white font-bold">{limitInfo.limit} adet</strong> ile sınırlandırılmıştır.
+                                <p className="text-[11px] text-snow-muted leading-relaxed">
+                                    Sunucu performansını korumak ve yapay zeka servislerinin aşırı yüklenmesini önlemek amacıyla günlük rapor oluşturma hakkınız <strong className="text-snow font-bold">{limitInfo.limit} adet</strong> ile sınırlandırılmıştır.
                                 </p>
-                                <div className="mt-2 text-[10px] text-white/40 border-t border-white/10 pt-1.5 flex justify-between items-center">
+                                <div className="mt-2 text-[10px] text-snow-faint border-t border-edge pt-1.5 flex justify-between items-center">
                                     <span>Bugün kalan hakkınız:</span>
                                     <span className={`font-bold ${limitInfo.remaining > 0 ? "text-green-400" : "text-red-400"}`}>
                                         {limitInfo.remaining} / {limitInfo.limit}
@@ -227,8 +227,8 @@ export default function InternDashboard() {
                         {/* SOL KOLON: Bildirim Paneli */}
                         <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
                             
-                            <div className="card p-0 flex flex-col flex-1 min-h-0 border-white/10">
-                                <div className="shrink-0 flex items-center justify-between p-3 border-b border-white/10 bg-night/30">
+                            <div className="card p-0 flex flex-col flex-1 min-h-0 border-edge">
+                                <div className="shrink-0 flex items-center justify-between p-3 border-b border-edge bg-night/30">
                                     <div className="flex items-center gap-2">
                                         <Bell size={16} className="text-brand-light" />
                                         <h2 className="font-bold text-sm">Bildirimler & Hatırlatmalar</h2>
@@ -267,7 +267,7 @@ export default function InternDashboard() {
                                                     <MessageSquare size={14} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-semibold text-white">Yeni Mesajınız Var!</p>
+                                                    <p className="text-xs font-semibold text-snow">Yeni Mesajınız Var!</p>
                                                     <p className="text-[11px] text-brand-light/80">Yöneticilerinizden okunmamış {totalUnread} mesaj bulunuyor.</p>
                                                 </div>
                                             </div>
@@ -275,11 +275,11 @@ export default function InternDashboard() {
                                         </div>
                                     ) : (
                                         !isOffline && (
-                                            <div className="flex items-center gap-2 p-2 rounded-md bg-white/5 border border-white/5">
-                                                <div className="p-1.5 bg-white/5 rounded-full text-white/40">
+                                            <div className="flex items-center gap-2 p-2 rounded-md bg-overlay border border-edge">
+                                                <div className="p-1.5 bg-overlay rounded-full text-snow-faint">
                                                     <MessageSquare size={14} />
                                                 </div>
-                                                <p className="text-xs text-white/40">Şu an okunmamış mesajınız yok.</p>
+                                                <p className="text-xs text-snow-faint">Şu an okunmamış mesajınız yok.</p>
                                             </div>
                                         )
                                     )}
@@ -310,7 +310,7 @@ export default function InternDashboard() {
                                                             {isOverdue ? <AlertTriangle size={14} /> : <Clock size={14} />}
                                                         </div>
                                                         <div className="truncate">
-                                                            <p className="text-xs font-semibold text-white/90 truncate">{task.title}</p>
+                                                            <p className="text-xs font-semibold text-snow truncate">{task.title}</p>
                                                             <p className={`text-[10px] font-medium mt-0.5 ${
                                                                 isOverdue ? 'text-red-400' : isUrgent ? 'text-orange-400' : 'text-blue-400'
                                                             }`}>
@@ -318,7 +318,7 @@ export default function InternDashboard() {
                                                             </p>
                                                         </div>
                                                     </div>
-                                                    <ChevronRight size={14} className="shrink-0 text-white/20 ml-2" />
+                                                    <ChevronRight size={14} className="shrink-0 text-snow-faint ml-2" />
                                                 </div>
                                             );
                                         })
@@ -347,10 +347,10 @@ export default function InternDashboard() {
                                                 <BookOpen size={14} className="text-brand-light" />
                                                 <span className="font-bold text-xs">Mentör Özeti</span>
                                             </div>
-                                            <p className="text-white/70 text-[11px] line-clamp-2">{mentorship.internSummary}</p>
+                                            <p className="text-snow-muted text-[11px] line-clamp-2">{mentorship.internSummary}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => navigate('/intern/archives')} className="shrink-0 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 rounded text-[11px] font-semibold transition-colors cursor-pointer">
+                                    <button onClick={() => navigate('/intern/archives')} className="shrink-0 bg-overlay hover:bg-overlay-hover text-snow px-3 py-1.5 rounded text-[11px] font-semibold transition-colors cursor-pointer">
                                         Arşiv
                                     </button>
                                 </div>
@@ -361,8 +361,8 @@ export default function InternDashboard() {
                                             <BookOpen size={14} className="text-brand-light" />
                                         </div>
                                         <div>
-                                            <h3 className="text-xs font-bold text-white mb-0.5">Staj Serüvenine Hoş Geldin!</h3>
-                                            <p className="text-white/60 text-[10px] leading-tight">
+                                            <h3 className="text-xs font-bold text-snow mb-0.5">Staj Serüvenine Hoş Geldin!</h3>
+                                            <p className="text-snow-muted text-[10px] leading-tight">
                                                 Mentörünün seni analiz edebilmesi için görevlerini tamamla ve arşivlerini yaz.
                                             </p>
                                         </div>
@@ -386,12 +386,12 @@ export default function InternDashboard() {
                                 </div>
                                 
                                 <div className="flex-1 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-brand/20 scrollbar-track-transparent">
-                                    <p className="text-white/80 leading-relaxed text-xs">
+                                    <p className="text-snow leading-relaxed text-xs">
                                         {tip?.tip || "Bugün için yeni bir tavsiye bulunamadı. Görevlerini tamamlamaya odaklan!"}
                                     </p>
                                     {tip?.quote && (
-                                        <div className="mt-3 p-2.5 rounded bg-black/20 border border-white/5">
-                                            <p className="text-[11px] text-white/60 italic font-medium">"{tip.quote}"</p>
+                                        <div className="mt-3 p-2.5 rounded bg-night border border-edge">
+                                            <p className="text-[11px] text-snow-muted italic font-medium">"{tip.quote}"</p>
                                         </div>
                                     )}
                                 </div>
@@ -405,20 +405,20 @@ export default function InternDashboard() {
             {/* GEÇMİŞ AI RAPORLARI MODALI */}
             {isHistoryOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-panel border border-white/10 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-fadeIn">
-                        <div className="flex items-center justify-between p-4 border-b border-white/10 bg-night/50">
+                    <div className="bg-panel border border-edge w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-fadeIn">
+                        <div className="flex items-center justify-between p-4 border-b border-edge bg-night/50">
                             <div className="flex items-center gap-2.5">
                                 <div className="p-2 bg-brand/10 rounded-lg text-brand-light">
                                     <FileText size={20} />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-white text-base">Geçmiş AI Analiz Raporları</h3>
-                                    <p className="text-xs text-white/50">Veritabanına kaydedilen önceki performans analizleriniz</p>
+                                    <h3 className="font-bold text-snow text-base">Geçmiş AI Analiz Raporları</h3>
+                                    <p className="text-xs text-snow-muted">Veritabanına kaydedilen önceki performans analizleriniz</p>
                                 </div>
                             </div>
                             <button 
                                 onClick={() => setIsHistoryOpen(false)}
-                                className="p-1.5 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
+                                className="p-1.5 text-snow-muted hover:text-snow bg-overlay hover:bg-overlay-hover rounded-lg transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
@@ -431,9 +431,9 @@ export default function InternDashboard() {
                                 </div>
                             ) : historyList.length === 0 ? (
                                 <div className="h-64 flex flex-col items-center justify-center text-center p-6">
-                                    <FileText size={40} className="text-white/20 mb-3" />
-                                    <p className="text-sm font-semibold text-white/70">Henüz kayıtlı bir rapor bulunamadı.</p>
-                                    <p className="text-xs text-white/40 mt-1">"Rapor Oluştur" butonunu kullanarak ilk analizinizi başlatabilirsiniz.</p>
+                                    <FileText size={40} className="text-snow-faint mb-3" />
+                                    <p className="text-sm font-semibold text-snow-muted">Henüz kayıtlı bir rapor bulunamadı.</p>
+                                    <p className="text-xs text-snow-faint mt-1">"Rapor Oluştur" butonunu kullanarak ilk analizinizi başlatabilirsiniz.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-[350px]">
@@ -447,11 +447,11 @@ export default function InternDashboard() {
                                                     className={`p-3 rounded-xl border cursor-pointer transition-all ${
                                                         isSelected 
                                                             ? 'bg-brand/20 border-brand/50 text-white shadow-md' 
-                                                            : 'bg-white/5 border-white/5 hover:bg-white/10 text-white/70'
+                                                            : 'bg-overlay border-edge hover:bg-overlay-hover text-snow-muted'
                                                     }`}
                                                 >
                                                     <div className="flex items-center justify-between mb-1.5">
-                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-black/30 text-white/80 flex items-center gap-1">
+                                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-night text-snow flex items-center gap-1">
                                                             <Calendar size={10} />
                                                             {new Date(item.reportDate || item.createdAt).toLocaleDateString('tr-TR')}
                                                         </span>
@@ -460,7 +460,7 @@ export default function InternDashboard() {
                                                             {item.overallScore} Puan
                                                         </span>
                                                     </div>
-                                                    <p className="text-xs font-medium line-clamp-2 text-white/90">
+                                                    <p className="text-xs font-medium line-clamp-2 text-snow">
                                                         {item.internSummary || "Detaylar için tıklayın."}
                                                     </p>
                                                 </div>
@@ -468,25 +468,25 @@ export default function InternDashboard() {
                                         })}
                                     </div>
 
-                                    <div className="md:col-span-2 bg-night/40 border border-white/5 rounded-xl p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 flex flex-col justify-between">
+                                    <div className="md:col-span-2 bg-night/40 border border-edge rounded-xl p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 flex flex-col justify-between">
                                         {selectedReport ? (
                                             <div className="space-y-4">
-                                                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                                                <div className="flex items-center justify-between pb-3 border-b border-edge">
                                                     <div>
-                                                        <span className="text-xs text-white/40 font-mono">RAPOR ID: #{selectedReport.id}</span>
-                                                        <h4 className="text-sm font-bold text-white mt-0.5">
+                                                        <span className="text-xs text-snow-faint font-mono">RAPOR ID: #{selectedReport.id}</span>
+                                                        <h4 className="text-sm font-bold text-snow mt-0.5">
                                                             {new Date(selectedReport.reportDate || selectedReport.createdAt).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })} Tarihli Analiz
                                                         </h4>
                                                     </div>
                                                     <div className="text-right">
-                                                        <div className="text-[10px] text-white/40 uppercase">Skor</div>
+                                                        <div className="text-[10px] text-snow-faint uppercase">Skor</div>
                                                         <div className="text-xl font-black text-brand-light">{selectedReport.overallScore}/100</div>
                                                     </div>
                                                 </div>
 
                                                 <div>
                                                     <h5 className="text-xs font-bold text-brand-light mb-1 uppercase tracking-wider">Mentör Özeti</h5>
-                                                    <p className="text-xs text-white/80 leading-relaxed bg-white/5 p-3 rounded-lg border border-white/5">
+                                                    <p className="text-xs text-snow leading-relaxed bg-overlay p-3 rounded-lg border border-edge">
                                                         {selectedReport.internSummary}
                                                     </p>
                                                 </div>
@@ -496,7 +496,7 @@ export default function InternDashboard() {
                                                         <h5 className="text-xs font-bold text-green-400 mb-1 uppercase tracking-wider">Öne Çıkan Güçlü Yönler</h5>
                                                         <ul className="list-disc list-inside space-y-1">
                                                             {selectedReport.strengths.map((str, idx) => (
-                                                                <li key={idx} className="text-xs text-white/70">{str}</li>
+                                                                <li key={idx} className="text-xs text-snow-muted">{str}</li>
                                                             ))}
                                                         </ul>
                                                     </div>
@@ -509,7 +509,7 @@ export default function InternDashboard() {
                                                 )}
                                             </div>
                                         ) : (
-                                            <div className="h-full flex items-center justify-center text-xs text-white/40">
+                                            <div className="h-full flex items-center justify-center text-xs text-snow-faint">
                                                 Detayları görüntülemek için soldan bir rapor seçin.
                                             </div>
                                         )}
@@ -524,20 +524,20 @@ export default function InternDashboard() {
             {/* GMAIL KAYIT MODALI */}
             {isEmailModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="bg-panel border border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-fadeIn">
+                    <div className="bg-panel border border-edge w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-fadeIn">
                         <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold text-white text-lg flex items-center gap-2">
+                            <h3 className="font-bold text-snow text-lg flex items-center gap-2">
                                 <Mail className="text-blue-400" size={20} />
                                 E-Posta Bildirimleri
                             </h3>
                             <button 
                                 onClick={() => setIsEmailModalOpen(false)}
-                                className="text-white/50 hover:text-white transition-colors cursor-pointer"
+                                className="text-snow-muted hover:text-snow transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
                         </div>
-                        <p className="text-xs text-white/60 mb-5 leading-relaxed">
+                        <p className="text-xs text-snow-muted mb-5 leading-relaxed">
                             Görevlerinizin teslim süresine son 1 gün kala veya gecikme yaşandığında sistemin size otomatik hatırlatma e-postası atabilmesi için bildirim adresinizi kaydedin.
                         </p>
                         <div className="space-y-3">
@@ -546,7 +546,7 @@ export default function InternDashboard() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Örn: mailadresiniz@gmail.com"
-                                className="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:border-blue-500 outline-none transition-colors"
+                                className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow focus:border-blue-500 outline-none transition-colors"
                             />
                             <button 
                                 onClick={handleSaveEmail}

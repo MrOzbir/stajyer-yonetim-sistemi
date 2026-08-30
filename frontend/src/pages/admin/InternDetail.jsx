@@ -208,7 +208,7 @@ export default function InternDetail() {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/admin/interns')}
-                        className="text-white/60 hover:text-white transition-colors cursor-pointer"
+                        className="text-snow-muted hover:text-snow transition-colors cursor-pointer"
                     >
                         <ArrowLeft size={20} />
                     </button>
@@ -216,7 +216,7 @@ export default function InternDetail() {
                         <h1 className="text-2xl font-bold">
                             {intern.name} {intern.surname}
                         </h1>
-                        <p className="text-white/40 text-sm">{intern.email}</p>
+                        <p className="text-snow-faint text-sm">{intern.email}</p>
                     </div>
                 </div>
 
@@ -252,54 +252,54 @@ export default function InternDetail() {
             {/* 2. GÖREV ATAMA MODALI (Dosyanın en altına, sayfanın ana div'inin hemen içine koyun) */}
             {isTaskModalOpen && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
-                        <h2 className="text-xl font-bold text-white mb-4">Yeni Görev Ata</h2>
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-edge p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold text-snow mb-4">Yeni Görev Ata</h2>
                         
                         <form onSubmit={handleAssignTask} className="space-y-4">
                            {/* 1. GÖREV BAŞLIĞI */}
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Görev Başlığı</label>
+                                <label className="block text-snow-muted text-sm mb-1">Görev Başlığı</label>
                                 <input 
                                     type="text" 
                                     required
                                     value={taskForm.title}
                                     onChange={(e) => setTaskForm({...taskForm, title: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                     placeholder="Örn: React ile Login sayfası tasarımı"
                                 />
                             </div>
 
                             {/* 2. GÖREV İÇERİĞİ / AÇIKLAMASI */}
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Görev Detayı (İçerik)</label>
+                                <label className="block text-snow-muted text-sm mb-1">Görev Detayı (İçerik)</label>
                                 <textarea 
                                     required
                                     value={taskForm.description}
                                     onChange={(e) => setTaskForm({...taskForm, description: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand min-h-[100px] resize-y"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand min-h-[100px] resize-y"
                                     placeholder="Görevle ilgili detaylı açıklamaları ve gereksinimleri buraya yazın..."
                                 ></textarea>
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Teslim Tarihi</label>
+                                <label className="block text-snow-muted text-sm mb-1">Teslim Tarihi</label>
                                 <input 
                                     type="date" 
                                     required
                                     min={new Date().toISOString().split('T')[0]}
                                     value={taskForm.deadline}
                                     onChange={(e) => setTaskForm({...taskForm, deadline: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Repo Linki (Opsiyonel)</label>
+                                <label className="block text-snow-muted text-sm mb-1">Repo Linki (Opsiyonel)</label>
                                 <input 
                                     type="url" 
                                     value={taskForm.repoLink}
                                     onChange={(e) => setTaskForm({...taskForm, repoLink: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                     placeholder="https://github.com/..."
                                 />
                             </div>
@@ -308,7 +308,7 @@ export default function InternDetail() {
                                 <button 
                                     type="button" 
                                     onClick={() => setIsTaskModalOpen(false)}
-                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg font-semibold transition-colors"
+                                    className="flex-1 bg-overlay hover:bg-overlay-hover text-snow py-2 rounded-lg font-semibold transition-colors"
                                 >
                                     İptal
                                 </button>
@@ -325,7 +325,7 @@ export default function InternDetail() {
             )}
 
             {/* Sekmeler */}
-            <div className="flex gap-2 mb-6 border-b border-white/10">
+            <div className="flex gap-2 mb-6 border-b border-edge">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
@@ -333,7 +333,7 @@ export default function InternDetail() {
                         className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-colors cursor-pointer border-b-2 ${
                             activeTab === tab.id
                                 ? 'border-brand text-brand-light'
-                                : 'border-transparent text-white/60 hover:text-white'
+                                : 'border-transparent text-snow-muted hover:text-white'
                         }`}
                     >
                         {tab.icon}
@@ -346,25 +346,25 @@ export default function InternDetail() {
             {activeTab === 'overview' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="card">
-                        <div className="text-white/40 text-xs mb-1">AI Puanı</div>
+                        <div className="text-snow-faint text-xs mb-1">AI Puanı</div>
                         <div className="text-3xl font-bold text-brand-light">
                             {intern.ai?.overallScore || '—'}
-                            <span className="text-sm text-white/30">/100</span>
+                            <span className="text-sm text-snow-faint">/100</span>
                         </div>
                     </div>
                     <div className="card">
-                        <div className="text-white/40 text-xs mb-1">Tamamlanan</div>
+                        <div className="text-snow-faint text-xs mb-1">Tamamlanan</div>
                         <div className="text-3xl font-bold">
                             {intern?.tasks?.completed || 0}
-                            <span className="text-sm text-white/30">/{intern?.tasks?.total || 0}</span>
+                            <span className="text-sm text-snow-faint">/{intern?.tasks?.total || 0}</span>
                         </div>
                     </div>
                     <div className="card">
-                        <div className="text-white/40 text-xs mb-1">Toplam Mesai</div>
+                        <div className="text-snow-faint text-xs mb-1">Toplam Mesai</div>
                         <div className="text-2xl font-bold">{intern?.work?.totalWorked || '—'}</div>
                     </div>
                     <div className="card">
-                        <div className="text-white/40 text-xs mb-1">Son Giriş</div>
+                        <div className="text-snow-faint text-xs mb-1">Son Giriş</div>
                         <div className="text-lg font-semibold">{intern?.lastLogin || '—'}</div>
                     </div>
 
@@ -374,11 +374,11 @@ export default function InternDetail() {
                             <div className="flex items-center gap-2 mb-3">
                                 <Sparkles className="text-brand-light" size={20} />
                                 <h3 className="font-bold text-lg">Son AI Değerlendirmesi</h3>
-                                <span className="text-xs text-white/40 ml-auto">
+                                <span className="text-xs text-snow-faint ml-auto">
                                     {new Date(latestReport.reportDate).toLocaleDateString('tr-TR')}
                                 </span>
                             </div>
-                            <p className="text-white/80 mb-4">{latestReport.internSummary}</p>
+                            <p className="text-snow mb-4">{latestReport.internSummary}</p>
                             
                             {latestReport.strengths?.length > 0 && (
                                 <div className="mb-3">
@@ -398,7 +398,7 @@ export default function InternDetail() {
                                     <div className="text-xs text-blue-400 font-semibold mb-1">🎯 Sonraki Adımlar</div>
                                     <ul className="space-y-1">
                                         {latestReport.nextSteps.slice(0, 3).map((step, i) => (
-                                            <li key={i} className="text-sm text-white/70 flex gap-2">
+                                            <li key={i} className="text-sm text-snow-muted flex gap-2">
                                                 <span className="text-blue-400">•</span>
                                                 {step}
                                             </li>
@@ -424,7 +424,7 @@ export default function InternDetail() {
                                     if (isSelectTasksMode) setSelectedTasks([]);
                                 }}
                                 className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                                    isSelectTasksMode ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
+                                    isSelectTasksMode ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-overlay text-snow-muted hover:bg-overlay-hover'
                                 }`}
                             >
                                 <ListChecks size={16} />
@@ -435,8 +435,8 @@ export default function InternDetail() {
 
                     {/* Toplu İşlem Barı (Silme) */}
                     {isSelectTasksMode && user?.role === 'ADMIN' && selectedTasks.length > 0 && (
-                        <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-white/10 mb-4 animate-in fade-in slide-in-from-top-2">
-                            <span className="text-sm text-white/60 font-semibold">{selectedTasks.length} görev seçildi</span>
+                        <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-edge mb-4 animate-in fade-in slide-in-from-top-2">
+                            <span className="text-sm text-snow-muted font-semibold">{selectedTasks.length} görev seçildi</span>
                             <button onClick={handleDeleteSelectedTasks} className="bg-red-500/20 hover:bg-red-500/30 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
                                 <Trash2 size={14} /> Seçilenleri Sil
                             </button>
@@ -477,19 +477,19 @@ export default function InternDetail() {
                                                         className="hover:text-brand-light hover:underline"
                                                     >
                                                         {task.title}
-                                                        <span className="ml-1 text-xs text-white/40">↗</span>
+                                                        <span className="ml-1 text-xs text-snow-faint">↗</span>
                                                     </a>
                                                 ) : (
                                                     task.title
                                                 )}
                                             </div>
                                             {task.description && (
-                                                <p className="text-sm text-white/60 mt-1.5 line-clamp-2">
+                                                <p className="text-sm text-snow-muted mt-1.5 line-clamp-2">
                                                     {task.description}
                                                 </p>
                                             )}
                                             {task.deadline && (
-                                                <div className="text-xs text-white/40 mt-2">
+                                                <div className="text-xs text-snow-faint mt-2">
                                                     <Clock size={12} className="inline mr-1" />
                                                     Deadline: {new Date(task.deadline).toLocaleDateString('tr-TR')}
                                                 </div>
@@ -512,14 +512,14 @@ export default function InternDetail() {
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingTask(task); }}
                                                     title="Düzenle"
-                                                    className="p-1.5 bg-white/5 hover:bg-brand/20 text-white/50 hover:text-brand-light rounded transition-colors cursor-pointer"
+                                                    className="p-1.5 bg-overlay hover:bg-brand/20 text-snow-muted hover:text-brand-light rounded transition-colors cursor-pointer"
                                                 >
                                                     <Pencil size={14} />
                                                 </button>
                                                 <button
                                                     onClick={(e) => { e.stopPropagation(); handleDeleteTask(task.id); }}
                                                     title="Sil"
-                                                    className="p-1.5 bg-white/5 hover:bg-red-500/20 text-white/50 hover:text-red-400 rounded transition-colors cursor-pointer"
+                                                    className="p-1.5 bg-overlay hover:bg-red-500/20 text-snow-muted hover:text-red-400 rounded transition-colors cursor-pointer"
                                                 >
                                                     <Trash2 size={14} />
                                                 </button>
@@ -531,7 +531,7 @@ export default function InternDetail() {
                             ))}
                         </div>
                     ) : (
-                        <p className="text-white/40 text-center py-8">Henüz görev atanmamış.</p>
+                        <p className="text-snow-faint text-center py-8">Henüz görev atanmamış.</p>
                     )}
                 </div>
             )}
@@ -539,38 +539,38 @@ export default function InternDetail() {
             {/* 3. GÖREV DÜZENLEME MODALI */}
             {editingTask && (
                 <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-                    <div className="bg-panel w-full max-w-md rounded-xl border border-white/10 p-6 shadow-2xl">
-                        <h2 className="text-xl font-bold text-white mb-4">Görevi Düzenle</h2>
+                    <div className="bg-panel w-full max-w-md rounded-xl border border-edge p-6 shadow-2xl">
+                        <h2 className="text-xl font-bold text-snow mb-4">Görevi Düzenle</h2>
                         
                         <form onSubmit={handleEditSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Görev Başlığı</label>
+                                <label className="block text-snow-muted text-sm mb-1">Görev Başlığı</label>
                                 <input 
                                     type="text" 
                                     required
                                     value={editingTask.title}
                                     onChange={(e) => setEditingTask({...editingTask, title: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Görev Detayı (İçerik)</label>
+                                <label className="block text-snow-muted text-sm mb-1">Görev Detayı (İçerik)</label>
                                 <textarea 
                                     required
                                     value={editingTask.description || ''}
                                     onChange={(e) => setEditingTask({...editingTask, description: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand min-h-[100px] resize-y"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand min-h-[100px] resize-y"
                                 ></textarea>
                             </div>
 
                             <div>
-                                <label className="block text-white/60 text-sm mb-1">Teslim Tarihi</label>
+                                <label className="block text-snow-muted text-sm mb-1">Teslim Tarihi</label>
                                 <input 
                                     type="date" 
                                     value={editingTask.deadline ? new Date(editingTask.deadline).toISOString().split('T')[0] : ''}
                                     onChange={(e) => setEditingTask({...editingTask, deadline: e.target.value})}
-                                    className="w-full bg-black/20 border border-white/10 rounded-lg px-4 py-2 text-white outline-none focus:border-brand"
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2 text-snow outline-none focus:border-brand"
                                 />
                             </div>
 
@@ -578,7 +578,7 @@ export default function InternDetail() {
                                 <button 
                                     type="button" 
                                     onClick={() => setEditingTask(null)}
-                                    className="flex-1 bg-white/5 hover:bg-white/10 text-white py-2 rounded-lg font-semibold transition-colors"
+                                    className="flex-1 bg-overlay hover:bg-overlay-hover text-snow py-2 rounded-lg font-semibold transition-colors"
                                 >
                                     İptal
                                 </button>
@@ -599,16 +599,16 @@ export default function InternDetail() {
                 <div className="space-y-3">
                     {intern.archives?.length > 0 ? intern.archives.map((archive) => (
                         <div key={archive.id} className="card">
-                            <div className="flex items-center gap-2 mb-2 text-white/40 text-xs">
+                            <div className="flex items-center gap-2 mb-2 text-snow-faint text-xs">
                                 <Calendar size={12} />
                                 {new Date(archive.date).toLocaleDateString('tr-TR', {
                                     day: 'numeric', month: 'long', year: 'numeric'
                                 })}
                             </div>
-                            <p className="text-white/80 whitespace-pre-wrap">{archive.content}</p>
+                            <p className="text-snow whitespace-pre-wrap">{archive.content}</p>
                         </div>
                     )) : (
-                        <div className="card text-center py-8 text-white/40">
+                        <div className="card text-center py-8 text-snow-faint">
                             Henüz günlük arşiv yok.
                         </div>
                     )}
@@ -620,8 +620,8 @@ export default function InternDetail() {
                 <div className="space-y-4">
                     {/* Başlık ve Çoklu Seçim Butonu */}
                     {reports.length > 0 && user?.role === 'ADMIN' && (
-                        <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-white/10">
-                            <span className="text-sm text-white/60">
+                        <div className="flex items-center justify-between bg-panel p-3 rounded-lg border border-edge">
+                            <span className="text-sm text-snow-muted">
                                 {selectedReports.length > 0 ? `${selectedReports.length} rapor seçildi` : "Toplu işlem için rapor seçin"}
                             </span>
                             
@@ -641,7 +641,7 @@ export default function InternDetail() {
                                         if (isSelectReportsMode) setSelectedReports([]);
                                     }}
                                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer ${
-                                        isSelectReportsMode ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-white/5 text-white/50 hover:bg-white/10'
+                                        isSelectReportsMode ? 'bg-brand/20 text-brand-light border border-brand/30' : 'bg-overlay text-snow-muted hover:bg-overlay-hover'
                                     }`}
                                 >
                                     <ListChecks size={16} />
@@ -653,8 +653,8 @@ export default function InternDetail() {
 
                     {reports.length === 0 ? (
                         <div className="card text-center py-12">
-                            <Bot size={48} className="mx-auto mb-4 text-white/20" />
-                            <p className="text-white/40 mb-4">Henüz AI raporu oluşturulmamış.</p>
+                            <Bot size={48} className="mx-auto mb-4 text-snow-faint" />
+                            <p className="text-snow-faint mb-4">Henüz AI raporu oluşturulmamış.</p>
                             <button onClick={generateReport} className="btn-brand">
                                 İlk Raporu Oluştur
                             </button>
@@ -707,7 +707,7 @@ function ReportCard({ report, onDelete }) {
                         <div className="font-semibold">
                             AI Performans Raporu
                         </div>
-                        <div className="text-xs text-white/40">
+                        <div className="text-xs text-snow-faint">
                             {new Date(report.reportDate).toLocaleDateString('tr-TR', {
                                 day: 'numeric', month: 'long', year: 'numeric',
                                 hour: '2-digit', minute: '2-digit'
@@ -721,29 +721,29 @@ function ReportCard({ report, onDelete }) {
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(report.id); }}
                         title="Raporu Sil"
-                        className="text-white/40 hover:text-red-400 transition-colors cursor-pointer p-1.5 hover:bg-red-500/10 rounded-lg"
+                        className="text-snow-faint hover:text-red-400 transition-colors cursor-pointer p-1.5 hover:bg-red-500/10 rounded-lg"
                     >
                         <Trash2 size={16} />
                     </button>
-                    <div className="text-white/40">{expanded ? '▲' : '▼'}</div>
+                    <div className="text-snow-faint">{expanded ? '▲' : '▼'}</div>
                 </div>
             </div>
 
             {expanded && (
-                <div className="mt-4 pt-4 border-t border-white/10 space-y-4">
+                <div className="mt-4 pt-4 border-t border-edge space-y-4">
                     {/* Özetler */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="p-3 bg-purple-900/20 rounded-lg">
                             <div className="text-xs text-purple-300 font-semibold mb-2">
                                 👤 Stajyer Özeti
                             </div>
-                            <p className="text-sm text-white/80">{report.internSummary}</p>
+                            <p className="text-sm text-snow">{report.internSummary}</p>
                         </div>
                         <div className="p-3 bg-blue-900/20 rounded-lg">
                             <div className="text-xs text-blue-300 font-semibold mb-2">
                                 👔 Yönetici Özeti
                             </div>
-                            <p className="text-sm text-white/80">{report.adminSummary}</p>
+                            <p className="text-sm text-snow">{report.adminSummary}</p>
                         </div>
                     </div>
 
@@ -755,7 +755,7 @@ function ReportCard({ report, onDelete }) {
                             </div>
                             <ul className="space-y-1">
                                 {report.strengths?.map((s, i) => (
-                                    <li key={i} className="text-sm text-white/70 flex gap-2">
+                                    <li key={i} className="text-sm text-snow-muted flex gap-2">
                                         <span className="text-green-400">✓</span> {s}
                                     </li>
                                 ))}
@@ -767,7 +767,7 @@ function ReportCard({ report, onDelete }) {
                             </div>
                             <ul className="space-y-1">
                                 {report.weaknesses?.map((w, i) => (
-                                    <li key={i} className="text-sm text-white/70 flex gap-2">
+                                    <li key={i} className="text-sm text-snow-muted flex gap-2">
                                         <span className="text-red-400">•</span> {w}
                                     </li>
                                 ))}
@@ -781,7 +781,7 @@ function ReportCard({ report, onDelete }) {
                             <div className="text-xs text-yellow-400 font-semibold mb-2">💡 Öneriler</div>
                             <ul className="space-y-1">
                                 {report.suggestions.map((s, i) => (
-                                    <li key={i} className="text-sm text-white/70">• {s}</li>
+                                    <li key={i} className="text-sm text-snow-muted">• {s}</li>
                                 ))}
                             </ul>
                         </div>
@@ -793,7 +793,7 @@ function ReportCard({ report, onDelete }) {
                             <div className="text-xs text-blue-400 font-semibold mb-2">📚 Öğrenme Kaynakları</div>
                             <ul className="space-y-1">
                                 {report.learningResources.map((r, i) => (
-                                    <li key={i} className="text-sm text-white/70">• {r}</li>
+                                    <li key={i} className="text-sm text-snow-muted">• {r}</li>
                                 ))}
                             </ul>
                         </div>
@@ -805,7 +805,7 @@ function ReportCard({ report, onDelete }) {
                             <div className="text-xs text-purple-400 font-semibold mb-2">🎯 Sonraki Adımlar</div>
                             <ol className="space-y-1 list-decimal list-inside">
                                 {report.nextSteps.map((s, i) => (
-                                    <li key={i} className="text-sm text-white/70">{s}</li>
+                                    <li key={i} className="text-sm text-snow-muted">{s}</li>
                                 ))}
                             </ol>
                         </div>
@@ -815,7 +815,7 @@ function ReportCard({ report, onDelete }) {
                     {report.encouragementQuote && (
                         <div className="p-3 bg-brand/10 rounded-lg border border-brand/30">
                             <div className="text-xs text-brand-light font-semibold mb-1">💬 Motivasyon</div>
-                            <p className="text-sm text-white/80 italic">"{report.encouragementQuote}"</p>
+                            <p className="text-sm text-snow italic">"{report.encouragementQuote}"</p>
                         </div>
                     )}
                 </div>

@@ -216,13 +216,13 @@ export default function AiChat() {
             <div className="flex items-center justify-between mb-4">
                 <div>
                     <h1 className="text-2xl font-bold mb-1">AI Mentörüm 🤖</h1>
-                    <p className="text-white/40 text-sm">Teknik sorularını sor, tavsiyeler al</p>
+                    <p className="text-snow-faint text-sm">Teknik sorularını sor, tavsiyeler al</p>
                 </div>
                 {messages.length > 0 && (
                     <button
                         onClick={clearHistory}
                         title="Geçmişi Temizle"
-                        className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
+                        className="text-snow-faint hover:text-brand-light transition-colors cursor-pointer"
                     >
                         <Trash2 size={18} />
                     </button>
@@ -236,13 +236,13 @@ export default function AiChat() {
                         <button
                             key={i}
                             onClick={() => setInput(q.text)}
-                            className="card text-left hover:border-white/20 transition-colors cursor-pointer"
+                            className="card text-left hover:border-edge transition-colors cursor-pointer"
                         >
                             <div className={`flex items-center gap-2 mb-2 ${q.color}`}>
                                 {q.icon}
                                 <span className="text-xs font-semibold">Hızlı Soru</span>
                             </div>
-                            <p className="text-sm text-white/80">{q.text}</p>
+                            <p className="text-sm text-snow">{q.text}</p>
                         </button>
                     ))}
                 </div>
@@ -251,7 +251,7 @@ export default function AiChat() {
             {/* Mesajlar */}
             <div className="flex-1 overflow-y-auto bg-panel rounded-xl p-4 space-y-4 mb-4">
                 {messages.length === 0 && !isStreaming && (
-                    <div className="flex flex-col items-center justify-center h-full text-white/40">
+                    <div className="flex flex-col items-center justify-center h-full text-snow-faint">
                         <Bot size={48} className="mb-4 opacity-20" />
                         <p>Merhaba! Ben AI mentörünüm. Ne sormak istersin?</p>
                     </div>
@@ -275,7 +275,7 @@ export default function AiChat() {
                             }`}
                         >
                             <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
-                            <div className={`text-xs mt-2 ${msg.role === 'user' ? 'text-white/60' : 'text-white/40'}`}>
+                            <div className={`text-xs mt-2 ${msg.role === 'user' ? 'text-snow-muted' : 'text-snow-faint'}`}>
                                 {new Date(msg.createdAt).toLocaleTimeString('tr-TR', {
                                     hour: '2-digit',
                                     minute: '2-digit'
@@ -296,11 +296,11 @@ export default function AiChat() {
                         <div className="w-8 h-8 rounded-full bg-brand/20 text-brand-light flex items-center justify-center shrink-0">
                             <Bot size={16} className="animate-pulse" />
                         </div>
-                        <div className="max-w-2xl px-4 py-3 rounded-2xl bg-night text-white rounded-bl-sm">
+                        <div className="max-w-2xl px-4 py-3 rounded-2xl bg-night text-snow rounded-bl-sm">
                             {streamingContent ? (
                                 <div className="text-sm whitespace-pre-wrap">{streamingContent}</div>
                             ) : (
-                                <div className="flex items-center gap-2 text-white/60">
+                                <div className="flex items-center gap-2 text-snow-muted">
                                     <div className="flex gap-1">
                                         <span className="w-2 h-2 bg-brand-light rounded-full animate-bounce"></span>
                                         <span className="w-2 h-2 bg-brand-light rounded-full animate-bounce" style={{ animationDelay: '0.15s' }}></span>
