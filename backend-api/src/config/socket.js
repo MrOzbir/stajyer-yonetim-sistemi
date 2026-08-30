@@ -5,7 +5,7 @@ const prisma = require('./database');
 function setupSocket(server) {
     const io = new Server(server, {
         cors: {
-            origin: ['http://localhost:5173', 'http://192.168.1.41:5173', 'http://127.0.0.1:5173', '*'],
+            origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://192.168.1.41:5173'],
             methods: ['GET', 'POST', 'PATCH'],
             credentials: true
         },
@@ -16,17 +16,31 @@ function setupSocket(server) {
 
     const onlineUsers = new Map();
 
-    // JWT Auth Middleware
+    // 🛡️ JWT Auth Middleware (Güvenli & Geriye Dönük Uyumlu)
     io.use((socket, next) => {
         try {
-            const token = socket.handshake.auth?.token;
-            if (!token) return next(new Error('Authentication token gerekli'));
+            const rawToken = socket.handshake.auth?.token || socket.handshake.headers?.authorization;
+            if (!rawToken) {
+                console.warn('⚠️ Soket Bağlantısı: Token bulunamadı');
+                return next(new Error('Authentication token gerekli'));
+            }
 
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            socket.userId = Number(decoded.userId || decoded.id);
-            socket.userRole = decoded.role;
+            const token = rawToken.startsWith('Bearer ') ? rawToken.slice(7) : rawToken;
+            const secret = process.env.JWT_SECRET || 'gizli-anahtar-fallback';
+            const decoded = jwt.verify(token, secret);
+
+            // Farklı token şemaları için güvenli ID çıkarımı
+            const resolvedId = decoded.userId || decoded.id || decoded.sub;
+            socket.userId = Number(resolvedId);
+            socket.userRole = decoded.role || 'INTERN';
+
+            if (!socket.userId || isNaN(socket.userId)) {
+                return next(new Error('Geçersiz kullanıcı kimliği'));
+            }
+
             next();
         } catch (error) {
+            console.error('🚨 Soket Auth Hatası:', error.message);
             next(new Error('Geçersiz token'));
         }
     });
@@ -35,9 +49,10 @@ function setupSocket(server) {
         const strUserId = String(socket.userId);
         onlineUsers.set(strUserId, socket.id);
         
-        // Kullanıcıyı kendi odasına String olarak kaydet
+        // Kullanıcıyı kendi özel odasına al
         socket.join(`user:${strUserId}`);
 
+        // Çevrimiçi kullanıcıları duyur
         io.emit('online_users', {
             userIds: Array.from(onlineUsers.keys()).map((id) => parseInt(id, 10)),
             count: onlineUsers.size
@@ -51,7 +66,6 @@ function setupSocket(server) {
 
                 if (!targetId || !content || !content.trim()) return;
 
-                // Veritabanına kaydet
                 const newMessage = await prisma.message.create({
                     data: {
                         content: content.trim(),
@@ -68,25 +82,21 @@ function setupSocket(server) {
                     id: newMessage.id,
                     content: newMessage.content,
                     timestamp: newMessage.createdAt || newMessage.timestamp || new Date(),
-                    createdAt: newMessage.createdAt || newMessage.timestamp || new Date(),
-                    isRead: newMessage.isRead || false,
                     senderId: newMessage.senderId,
                     receiverId: newMessage.receiverId,
                     sender: newMessage.sender,
                     receiver: newMessage.receiver
                 };
 
-                // Hem gönderenin hem alıcının odasına ilet
                 io.to(`user:${String(socket.userId)}`).emit('new_message', payload);
                 io.to(`user:${String(targetId)}`).emit('new_message', payload);
 
-                console.log(`💬 Mesaj iletildi: ${socket.userId} -> ${targetId}`);
             } catch (error) {
                 console.error('🚨 SOCKET MESAJ KAYIT HATASI:', error);
             }
         });
 
-        // "Yazıyor..." Göstergesi
+        // ⌨️ "Yazıyor..." Göstergesi
         socket.on('typing', (data) => {
             const { receiverId, isTyping } = data;
             if (receiverId) {
@@ -97,7 +107,7 @@ function setupSocket(server) {
             }
         });
 
-        // Bağlantı Koptuğunda
+        // 🔌 Bağlantı Koptuğunda
         socket.on('disconnect', () => {
             onlineUsers.delete(String(socket.userId));
             io.emit('online_users', {

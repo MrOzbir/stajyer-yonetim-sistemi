@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
     LayoutDashboard, Users, Building2,
@@ -25,6 +25,7 @@ const internLinks = [
 export default function Layout() {
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation(); // 🚀 Sayfa değişimlerini yakalamak için
     const links = user?.role === 'ADMIN' ? adminLinks : internLinks;
 
     const handleLogout = async () => {
@@ -33,25 +34,32 @@ export default function Layout() {
     };
 
     const { unreadCounts } = useSocketContext();
-    const totalUnread = Object.values(unreadCounts).reduce((a, b) => a + b, 0);
+    const totalUnread = Object.values(unreadCounts || {}).reduce((a, b) => a + b, 0);
 
     return (
         <div className="min-h-screen bg-night">
             {/* Sidebar */}
-            <aside className="fixed left-0 top-0 h-full w-64 bg-panel border-r border-white/5 flex flex-col">
-                {/* Logo Bölümü */}
+            <aside className="fixed left-0 top-0 h-full w-64 bg-panel border-r border-white/5 flex flex-col z-20">
+               {/* Logo Bölümü */}
                 <div className="flex items-center gap-3 p-4 border-b border-white/5">
-                    {/* Sabit kare kapsayıcı ve kırılmayı önleyen resim boyutu */}
                     <div className="w-12 h-12 flex items-center justify-center shrink-0 self-center">
                         <img 
-                            src="/SiteLogo.png" 
-                            alt="Stajyer Yönetim Sistemi Logo" 
-                            className="w-12 h-12 object-contain"
+                            src="/favicon.png" 
+                            alt="Logo" 
+                            className="w-10 h-10 object-contain"
+                            onError={(e) => {
+                                if (e.currentTarget.src.endsWith('favicon.png')) {
+                                    e.currentTarget.src = '/SiteLogo.png';
+                                } else if (e.currentTarget.src.endsWith('SiteLogo.png')) {
+                                    e.currentTarget.src = '/favicon.jpeg';
+                                } else if (e.currentTarget.src.endsWith('favicon.jpeg')) {
+                                    e.currentTarget.src = '/SiteLogo.jpeg';
+                                }
+                            }}
                         />
                     </div>
-                    
                     <div className="flex flex-col justify-center">
-                        <div className="text-base font-bold leading-snug text-white text-center">
+                        <div className="text-base font-bold leading-snug text-white">
                             Stajyer Yönetim<br />Sistemi
                         </div>
                     </div>
@@ -68,9 +76,9 @@ export default function Layout() {
                                 to={link.to}
                                 end={link.end}
                                 className={({ isActive }) =>
-                                    `flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-colors ${
+                                    `flex items-center justify-between px-4 py-2.5 rounded-lg text-sm transition-all duration-150 ${
                                         isActive
-                                            ? 'bg-brand/15 text-brand-light border-l-2 border-brand font-semibold'
+                                            ? 'bg-brand/15 text-brand-light border-l-2 border-brand font-semibold translate-x-1'
                                             : 'text-white/60 hover:bg-white/5 hover:text-white'
                                     }`
                                 }
@@ -103,7 +111,7 @@ export default function Layout() {
                         <button
                             onClick={handleLogout}
                             title="Çıkış Yap"
-                            className="text-white/40 hover:text-brand-light transition-colors"
+                            className="text-white/40 hover:text-brand-light transition-colors cursor-pointer"
                         >
                             <LogOut size={18} />
                         </button>
@@ -111,9 +119,11 @@ export default function Layout() {
                 </div>
             </aside>
 
-            {/* İçerik */}
+            {/* İçerik: Sayfa her değiştiğinde animasyon tetiklenir */}
             <main className="ml-64 p-8">
-                <Outlet />
+                <div key={location.pathname} className="animate-page">
+                    <Outlet />
+                </div>
             </main>
         </div>
     );

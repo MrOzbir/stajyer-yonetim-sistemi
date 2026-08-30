@@ -27,8 +27,11 @@ export default function Chat() {
         (async () => {
             try {
                 if (user?.role === 'ADMIN') {
-                    const res = await api.get('/interns');
-                    setUsers(res.data.interns || []);
+                    // /users yerine /interns/users veya /users?all=true rotasını deneyin
+                    const res = await api.get('/interns/users'); 
+                    const allUsers = res.data.users || res.data || [];
+                    
+                    setUsers(allUsers.filter(u => Number(u.id) !== Number(user.id || user.userId)));
                 } else {
                     const res = await api.get('/users?role=ADMIN');
                     setUsers(res.data || []);

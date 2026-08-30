@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { useAuth } from '../../context/AuthContext';
@@ -6,14 +6,15 @@ import { useSocketContext } from '../../context/SocketContext';
 import { 
     BookOpen, Sparkles, Bell, 
     MessageSquare, Clock, AlertTriangle, CheckCircle2, ChevronRight, Bot,
-    FileText, X, Calendar, Award, Info, Mail // 🚀 Mail ikonu eklendi
+    FileText, X, Calendar, Award, Info, Mail, WifiOff, RefreshCw
 } from 'lucide-react';
 
 export default function InternDashboard() {
     const { user } = useAuth();
     const navigate = useNavigate();
     
-    const { unreadCounts } = useSocketContext();
+    // Global Socket.io üzerinden bağlantı durumu ve okunmamış mesajlar
+    const { unreadCounts, connected } = useSocketContext();
     const totalUnread = Object.values(unreadCounts || {}).reduce((a, b) => a + b, 0);
 
     const [tip, setTip] = useState(null);
@@ -22,6 +23,7 @@ export default function InternDashboard() {
     const [limitInfo, setLimitInfo] = useState({ remaining: 0, limit: 3 });
     const [generating, setGenerating] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [serverError, setServerError] = useState(false);
 
     // GEÇMİŞ RAPOR MODAL DURUMLARI
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -29,33 +31,51 @@ export default function InternDashboard() {
     const [loadingHistory, setLoadingHistory] = useState(false);
     const [selectedReport, setSelectedReport] = useState(null);
 
-    // 🚀 MAIL KAYIT MODAL DURUMLARI
+    // MAIL KAYIT MODAL DURUMLARI
     const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
     const [email, setEmail] = useState('');
     const [isSavingEmail, setIsSavingEmail] = useState(false);
 
-    useEffect(() => {
-        const fetchDashboardData = async () => {
-            try {
-                const [tipRes, menRes, tasksRes, limitRes] = await Promise.allSettled([
-                    api.get('/ai/daily-tip'),
-                    api.get('/ai/my-mentorship'),
-                    api.get('/tasks'),
-                    api.get('/ai/my-report-limit') 
-                ]);
-                
-                if (tipRes.status === 'fulfilled') setTip(tipRes.value.data);
-                if (menRes.status === 'fulfilled') setMentorship(menRes.value.data);
-                if (tasksRes.status === 'fulfilled') setTasks(tasksRes.value.data || []);
-                if (limitRes.status === 'fulfilled') setLimitInfo(limitRes.value.data);
-            } catch (e) {
-                console.error("Dashboard verileri çekilirken hata:", e);
-            } finally {
-                setLoading(false);
+    // 1. fetchDashboardData fonksiyonunu parametreli ve güvenli hale getirin
+    const fetchDashboardData = useCallback(async () => {
+        try {
+            const [tipRes, menRes, tasksRes, limitRes] = await Promise.allSettled([
+                api.get('/ai/daily-tip'),
+                api.get('/ai/my-mentorship'),
+                api.get('/tasks'),
+                api.get('/ai/my-report-limit') 
+            ]);
+            
+            if (tasksRes.status === 'rejected') {
+                setServerError(true);
+            } else {
+                setTasks(tasksRes.value.data || []);
             }
-        };
-        fetchDashboardData();
+
+            if (tipRes.status === 'fulfilled') setTip(tipRes.value.data);
+            if (menRes.status === 'fulfilled') setMentorship(menRes.value.data);
+            if (limitRes.status === 'fulfilled') setLimitInfo(limitRes.value.data);
+        } catch (e) {
+            console.error("Dashboard verileri çekilirken hata:", e);
+            setServerError(true);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    // 2. useEffect içinde doğrudan çağırmak yerine temiz asenkron başlatıcı kullanın
+    useEffect(() => {
+        let isMounted = true;
+        (async () => {
+            if (isMounted) {
+                await fetchDashboardData();
+            }
+        })();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [fetchDashboardData]);
 
     const handleGenerateMyReport = async () => {
         if (limitInfo.remaining <= 0) {
@@ -92,7 +112,6 @@ export default function InternDashboard() {
         }
     };
 
-    // 🚀 MAIL KAYDETME FONKSİYONU
     const handleSaveEmail = async () => {
         if (!email) {
             alert("Lütfen geçerli bir e-posta adresi girin.");
@@ -114,20 +133,22 @@ export default function InternDashboard() {
     const activeTasks = tasks.filter(t => t.status !== 'COMPLETED' && t.deadline);
     activeTasks.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
 
+    // Sunucuya bağlı değil mi kontrolü
+    const isOffline = serverError || !connected;
+
     return (
         <div className="flex flex-col h-[calc(100vh-6rem)] min-h-[600px]">
             
-            {/* 🚀 BAŞLIK VE MAIL BUTONU */}
+            {/* BAŞLIK VE MAIL BUTONU */}
             <div className="shrink-0 flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                     <h1 className="text-xl font-bold">Merhaba, {user?.name}! 👋</h1>
                     <p className="text-white/40 text-xs hidden sm:block">• Bugünün bildirimleri ve AI mentöründen notlar</p>
                 </div>
                 
-                {/* 🚀 SAĞ ÜST KÖŞEDEKİ UFAK MAVİ BUTON */}
                 <button
                     onClick={() => setIsEmailModalOpen(true)}
-                    className="flex items-center gap-1.5 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    className="flex items-center gap-1.5 bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 border border-blue-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                 >
                     <Mail size={14} />
                 </button>
@@ -153,8 +174,6 @@ export default function InternDashboard() {
                         </div>
                         
                         <div className="relative group flex items-center gap-3 sm:gap-4">
-
-                            {/* Limit Sayacı */}
                             <div className="text-right hidden sm:block">
                                 <div className="text-[10px] text-white/40 uppercase tracking-wider">LİMİT</div>
                                 <div className="font-bold text-sm flex items-baseline gap-1">
@@ -163,21 +182,19 @@ export default function InternDashboard() {
                                 </div>
                             </div>
 
-                            {/* GEÇMİŞ RAPORLAR BUTONU */}
                             <button
                                 onClick={handleOpenHistoryModal}
-                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-lg text-xs font-semibold border border-white/10 transition-all shadow-sm"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white/90 hover:text-white rounded-lg text-xs font-semibold border border-white/10 transition-all shadow-sm cursor-pointer"
                                 title="Geçmiş AI Raporlarını Gör"
                             >
                                 <FileText size={14} className="text-brand-light" />
                                 <span className="hidden md:inline">Geçmiş Raporlar</span>
                             </button>
 
-                            {/* RAPOR OLUŞTUR BUTONU */}
                             <button
                                 onClick={handleGenerateMyReport}
                                 disabled={generating || limitInfo.remaining === 0}
-                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                                className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                                     generating || limitInfo.remaining === 0
                                         ? 'bg-white/5 text-white/30 cursor-not-allowed'
                                         : 'bg-brand hover:bg-brand-light text-white shadow-lg'
@@ -186,7 +203,6 @@ export default function InternDashboard() {
                                 {generating ? 'Analiz...' : 'Rapor Oluştur'}
                             </button>
 
-                            {/* HOVER TOOLTIP KUTUSU */}
                             <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-night/95 border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 pointer-events-none z-50 backdrop-blur-md">
                                 <div className="flex items-center gap-1.5 text-xs font-bold text-brand-light mb-1">
                                     <Info size={14} />
@@ -202,24 +218,45 @@ export default function InternDashboard() {
                                     </span>
                                 </div>
                             </div>
-
                         </div>
                     </div>
 
                     {/* ORTA BÖLÜM */}
                     <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
                         
-                        {/* SOL KOLON */}
+                        {/* SOL KOLON: Bildirim Paneli */}
                         <div className="lg:col-span-2 flex flex-col gap-4 min-h-0">
                             
-                            {/* BİLDİRİM PANELİ */}
                             <div className="card p-0 flex flex-col flex-1 min-h-0 border-white/10">
-                                <div className="shrink-0 flex items-center gap-2 p-3 border-b border-white/10 bg-night/30">
-                                    <Bell size={16} className="text-brand-light" />
-                                    <h2 className="font-bold text-sm">Bildirimler & Hatırlatmalar</h2>
+                                <div className="shrink-0 flex items-center justify-between p-3 border-b border-white/10 bg-night/30">
+                                    <div className="flex items-center gap-2">
+                                        <Bell size={16} className="text-brand-light" />
+                                        <h2 className="font-bold text-sm">Bildirimler & Hatırlatmalar</h2>
+                                    </div>
+                                    {isOffline && (
+                                        <button 
+                                            onClick={fetchDashboardData}
+                                            className="flex items-center gap-1 text-[11px] text-red-400 hover:text-red-300 transition-colors cursor-pointer"
+                                        >
+                                            <RefreshCw size={12} /> Tekrar Bağlan
+                                        </button>
+                                    )}
                                 </div>
                                 
                                 <div className="flex-1 overflow-y-auto p-2 space-y-1.5 bg-panel scrollbar-thin scrollbar-thumb-brand/20 scrollbar-track-transparent">
+                                    
+                                    {/* SUNUCU KOPUKLUK UYARISI */}
+                                    {isOffline && (
+                                        <div className="flex items-center gap-2.5 p-2.5 rounded-md bg-red-500/10 border border-red-500/20 text-red-400">
+                                            <WifiOff size={16} className="shrink-0" />
+                                            <div className="text-xs">
+                                                <p className="font-bold">Sunucu Bağlantısı Kesildi</p>
+                                                <p className="text-[11px] text-red-400/80">Canlı bildirimler ve yeni görevler şu an yüklenemiyor.</p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Mesaj Bildirimi */}
                                     {totalUnread > 0 ? (
                                         <div 
                                             onClick={() => navigate('/intern/chat')}
@@ -237,14 +274,17 @@ export default function InternDashboard() {
                                             <ChevronRight size={14} className="text-brand-light/50" />
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-2 p-2 rounded-md bg-white/5 border border-white/5">
-                                            <div className="p-1.5 bg-white/5 rounded-full text-white/40">
-                                                <MessageSquare size={14} />
+                                        !isOffline && (
+                                            <div className="flex items-center gap-2 p-2 rounded-md bg-white/5 border border-white/5">
+                                                <div className="p-1.5 bg-white/5 rounded-full text-white/40">
+                                                    <MessageSquare size={14} />
+                                                </div>
+                                                <p className="text-xs text-white/40">Şu an okunmamış mesajınız yok.</p>
                                             </div>
-                                            <p className="text-xs text-white/40">Şu an okunmamış mesajınız yok.</p>
-                                        </div>
+                                        )
                                     )}
 
+                                    {/* Yaklaşan Görevler */}
                                     {activeTasks.length > 0 ? (
                                         activeTasks.map(task => {
                                             const daysLeft = Math.ceil((new Date(task.deadline).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
@@ -283,12 +323,14 @@ export default function InternDashboard() {
                                             );
                                         })
                                     ) : (
-                                        <div className="flex items-center gap-2 p-2 rounded-md bg-green-500/5 border border-green-500/10">
-                                            <div className="p-1.5 bg-green-500/10 rounded-full text-green-400">
-                                                <CheckCircle2 size={14} />
+                                        !isOffline && (
+                                            <div className="flex items-center gap-2 p-2 rounded-md bg-green-500/5 border border-green-500/10">
+                                                <div className="p-1.5 bg-green-500/10 rounded-full text-green-400">
+                                                    <CheckCircle2 size={14} />
+                                                </div>
+                                                <p className="text-xs text-green-400/80">Aktif bir göreviniz yok. Harika!</p>
                                             </div>
-                                            <p className="text-xs text-green-400/80">Aktif bir göreviniz yok. Harika!</p>
-                                        </div>
+                                        )
                                     )}
                                 </div>
                             </div>
@@ -308,7 +350,7 @@ export default function InternDashboard() {
                                             <p className="text-white/70 text-[11px] line-clamp-2">{mentorship.internSummary}</p>
                                         </div>
                                     </div>
-                                    <button onClick={() => navigate('/intern/archives')} className="shrink-0 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 rounded text-[11px] font-semibold transition-colors">
+                                    <button onClick={() => navigate('/intern/archives')} className="shrink-0 bg-white/5 hover:bg-white/10 text-white px-3 py-1.5 rounded text-[11px] font-semibold transition-colors cursor-pointer">
                                         Arşiv
                                     </button>
                                 </div>
@@ -327,7 +369,7 @@ export default function InternDashboard() {
                                     </div>
                                     <button 
                                         onClick={() => navigate('/intern/archives')} 
-                                        className="shrink-0 bg-brand hover:bg-brand-light text-white px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors"
+                                        className="shrink-0 bg-brand hover:bg-brand-light text-white px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors cursor-pointer"
                                     >
                                         Arşiv Yaz
                                     </button>
@@ -364,8 +406,6 @@ export default function InternDashboard() {
             {isHistoryOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-panel border border-white/10 w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden animate-fadeIn">
-                        
-                        {/* Modal Header */}
                         <div className="flex items-center justify-between p-4 border-b border-white/10 bg-night/50">
                             <div className="flex items-center gap-2.5">
                                 <div className="p-2 bg-brand/10 rounded-lg text-brand-light">
@@ -378,13 +418,12 @@ export default function InternDashboard() {
                             </div>
                             <button 
                                 onClick={() => setIsHistoryOpen(false)}
-                                className="p-1.5 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                className="p-1.5 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
                         </div>
 
-                        {/* Modal Body */}
                         <div className="flex-1 overflow-hidden p-4">
                             {loadingHistory ? (
                                 <div className="h-64 flex justify-center items-center">
@@ -398,8 +437,6 @@ export default function InternDashboard() {
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-full min-h-[350px]">
-                                    
-                                    {/* Sol Taraf: Rapor Listesi */}
                                     <div className="md:col-span-1 overflow-y-auto space-y-2 pr-1 scrollbar-thin scrollbar-thumb-white/10">
                                         {historyList.map((item) => {
                                             const isSelected = selectedReport?.id === item.id;
@@ -431,7 +468,6 @@ export default function InternDashboard() {
                                         })}
                                     </div>
 
-                                    {/* Sağ Taraf: Seçilen Rapor Detayı */}
                                     <div className="md:col-span-2 bg-night/40 border border-white/5 rounded-xl p-4 overflow-y-auto scrollbar-thin scrollbar-thumb-white/10 flex flex-col justify-between">
                                         {selectedReport ? (
                                             <div className="space-y-4">
@@ -478,16 +514,14 @@ export default function InternDashboard() {
                                             </div>
                                         )}
                                     </div>
-
                                 </div>
                             )}
                         </div>
-
                     </div>
                 </div>
             )}
 
-            {/* 🚀 GMAIL KAYIT MODALI */}
+            {/* GMAIL KAYIT MODALI */}
             {isEmailModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
                     <div className="bg-panel border border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 animate-fadeIn">
@@ -498,7 +532,7 @@ export default function InternDashboard() {
                             </h3>
                             <button 
                                 onClick={() => setIsEmailModalOpen(false)}
-                                className="text-white/50 hover:text-white transition-colors"
+                                className="text-white/50 hover:text-white transition-colors cursor-pointer"
                             >
                                 <X size={18} />
                             </button>
@@ -517,7 +551,7 @@ export default function InternDashboard() {
                             <button 
                                 onClick={handleSaveEmail}
                                 disabled={isSavingEmail}
-                                className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+                                className="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-50 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer"
                             >
                                 {isSavingEmail ? (
                                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>

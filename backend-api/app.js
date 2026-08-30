@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 
-// 1. Rota İçe Aktarmaları
+// 1. Tüm Rotaların İçe Aktarılması
 const authRoutes = require('./src/routes/authRoutes');
 const internRoutes = require('./src/routes/internRoutes');
 const userRoutes = require('./src/routes/userRoutes');
@@ -15,17 +15,18 @@ const aiRoutes = require('./src/routes/aiRoutes');
 
 const app = express();
 
-// 2. CORS Yapılandırması (Preflight ve PATCH izinleri dahil)
+// 2. CORS Yapılandırması (Giriş ve Tüm İstekler İçin)
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://192.168.1.41:5173', 'http://127.0.0.1:5173'],
+    origin: ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// 3. Rota Tanımları
+// 3. API Rotaları
 app.use('/api/auth', authRoutes);
 app.use('/api/interns', internRoutes);
 app.use('/api/users', userRoutes);

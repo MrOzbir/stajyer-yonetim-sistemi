@@ -1,93 +1,178 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { ShieldAlert, LogIn } from 'lucide-react';
+import api from '../api/axios';
+import { HelpCircle, X } from 'lucide-react';
 
 export default function Login() {
-    const { login } = useAuth();
-    const navigate = useNavigate();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isTakingOff, setIsTakingOff] = useState(false);
+    const [showForgotModal, setShowForgotModal] = useState(false);
+
+    const navigate = useNavigate();
+    const { login } = useAuth();
+
+    const targetRouteRef = useRef('/admin');
+    const fallbackTimerRef = useRef(null);
+    const pendingAuthDataRef = useRef(null);
+
+    // 🛫 Video Bittiğinde Gerçek Giriş ve Yönlendirme
+    const completeLoginAndRedirect = () => {
+        if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+
+        const data = pendingAuthDataRef.current;
+        if (data) {
+            const user = data.user || data;
+            const token = data.token;
+
+            if (token) localStorage.setItem('token', token);
+            if (user) localStorage.setItem('user', JSON.stringify(user));
+            if (login) login(data);
+        }
+
+        navigate(targetRouteRef.current, { replace: true });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
+
         try {
-            const user = await login(email, password);
-            navigate(user.role === 'ADMIN' ? '/admin' : '/intern');
+            const res = await api.post('/auth/login', {
+                email: email.trim(),
+                password: password
+            });
+
+            const data = res.data;
+            const user = data.user || data;
+
+            // Giriş verilerini video bitene kadar hafızada tut
+            pendingAuthDataRef.current = data;
+            const userRole = (user.role || '').toUpperCase();
+            targetRouteRef.current = userRole === 'ADMIN' ? '/admin' : '/intern';
+
+            // ✈️ Uçak geçiş videosunu başlat
+            setIsTakingOff(true);
+
+            // Emniyet Sayacı: Video takılırsa veya başlamazsa zorla yönlendir
+            fallbackTimerRef.current = setTimeout(() => {
+                completeLoginAndRedirect();
+            }, 2300);
+
         } catch (err) {
-            setError(err.response?.data?.error || 'Giriş yapılamadı. Sunucuyu kontrol edin.');
-        } finally {
+            console.error('Giriş Hatası:', err.response?.data || err.message);
+            alert(err.response?.data?.error || err.response?.data?.message || 'Geçersiz e-posta veya şifre.');
             setLoading(false);
+            setIsTakingOff(false);
         }
     };
 
+    useEffect(() => {
+        return () => {
+            if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+        };
+    }, []);
+
     return (
-        <div className="min-h-screen bg-night flex items-center justify-center p-4">
-            <div className="w-full max-w-md">
-                {/* Logo */}
-                <div className="flex items-center justify-center gap-3 mb-8">
-                    <div className="w-12 h-12 bg-brand rounded-xl flex items-center justify-center shadow-[0_0_35px_rgba(160,30,39,0.45)]">
-                        <ShieldAlert size={26} className="text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-2xl font-bold">Stajyer Yönetim Sistemi</h1>
-                        <p className="text-sm text-white/40">Stajyer Yönetim Sistemi</p>
-                    </div>
+        <div className="relative min-h-screen bg-night flex items-center justify-center p-4 overflow-hidden">
+            
+            {/* ✈️ Uçak Kalkış Katmanı (Transparan & Tam Ekran) */}
+            {isTakingOff && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-transparent pointer-events-none">
+                    <video
+                        src="/plane-transition.webm"
+                        autoPlay
+                        muted
+                        playsInline
+                        onEnded={completeLoginAndRedirect}
+                        onError={completeLoginAndRedirect}
+                        className="w-full h-full object-cover"
+                    />
+                </div>
+            )}
+
+            {/* Giriş Form Kartı */}
+            <div className="w-full max-w-md bg-panel p-8 rounded-xl border border-white/10 shadow-2xl relative z-10">
+                <div className="text-center mb-6">
+                    <h1 className="text-2xl font-bold text-white">Stajyer Yönetim Sistemi</h1>
+                    <p className="text-white/40 text-sm mt-1">Lütfen hesabınıza giriş yapın</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="card space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="label-dark">E-posta</label>
+                        <label className="block text-white/60 text-sm mb-1">E-posta</label>
                         <input
-                            className="input-dark"
                             type="email"
+                            required
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="admin@sirket.com"
-                            required
+                            className="w-full bg-night border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-brand"
+                            placeholder="ornek@sirket.com"
                         />
                     </div>
 
                     <div>
                         <div className="flex items-center justify-between mb-1">
-                            <label className="label-dark">Şifre</label>
-                            <Link 
-                                to="/forgot-password" 
-                                className="text-xs text-brand-light hover:underline transition-colors"
+                            <label className="block text-white/60 text-sm">Şifre</label>
+                            <button
+                                type="button"
+                                onClick={() => setShowForgotModal(true)}
+                                className="text-xs text-brand-light hover:underline cursor-pointer"
                             >
                                 Şifremi Unuttum?
-                            </Link>
+                            </button>
                         </div>
                         <input
-                            className="input-dark"
                             type="password"
+                            required
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                            className="w-full bg-night border border-white/10 rounded-lg px-4 py-2.5 text-white outline-none focus:border-brand"
                             placeholder="••••••••"
-                            required
                         />
                     </div>
 
-                    {error && (
-                        <div className="bg-brand/10 border border-brand/30 text-brand-light rounded-lg px-4 py-2.5 text-sm">
-                            ⚠️ {error}
-                        </div>
-                    )}
-
-                    <button type="submit" disabled={loading} className="btn-brand w-full flex items-center justify-center gap-2">
-                        <LogIn size={16} />
-                        {loading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+                    <button
+                        type="submit"
+                        disabled={loading || isTakingOff}
+                        className="w-full bg-brand hover:bg-brand-light text-white font-semibold py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50 mt-2"
+                    >
+                        {loading || isTakingOff ? 'Uçuşa Hazırlanıyor...' : 'Giriş Yap'}
                     </button>
                 </form>
-
-                <p className="text-center text-xs text-white/30 mt-6">
-                    © 2026 Stajyer Yönetim Sistemi • AI Destekli Stajyer Yönetimi
-                </p>
             </div>
+
+            {/* 🔑 Şifremi Unuttum Modalı */}
+            {showForgotModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+                    <div className="bg-panel border border-white/10 w-full max-w-sm rounded-2xl shadow-2xl p-6 relative">
+                        <button
+                            onClick={() => setShowForgotModal(false)}
+                            className="absolute top-4 right-4 text-white/40 hover:text-white"
+                        >
+                            <X size={18} />
+                        </button>
+                        <div className="flex items-center gap-3 mb-3">
+                            <div className="p-2 bg-brand/20 text-brand-light rounded-lg">
+                                <HelpCircle size={20} />
+                            </div>
+                            <h3 className="font-bold text-white text-base">Şifre Sıfırlama</h3>
+                        </div>
+                        <p className="text-xs text-white/70 leading-relaxed">
+                            Güvenlik protokolü gereği lütfen sistem yöneticiniz (Admin) ile iletişime geçin.
+                        </p>
+                        <button
+                            onClick={() => setShowForgotModal(false)}
+                            className="w-full mt-5 bg-white/10 hover:bg-white/20 text-white font-semibold py-2 rounded-lg text-xs transition-colors"
+                        >
+                            Anladım
+                        </button>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }

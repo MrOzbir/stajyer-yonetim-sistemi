@@ -20,12 +20,22 @@ export function AuthProvider({ children }) {
     // ✅ setLoading kaldırıldı — artık state değişmiyor
     const [user, setUser] = useState(getInitialAuth);
 
-    const login = async (email, password) => {
-        const res = await api.post('/auth/login', { email, password });
-        localStorage.setItem('token', res.data.token);
-        localStorage.setItem('user', JSON.stringify(res.data.user));
-        setUser(res.data.user);
-        return res.data.user;
+    // frontend/src/context/AuthContext.jsx
+    // frontend/src/context/AuthContext.jsx
+
+    const login = (authData) => {
+        // 1. Eğer doğrudan API'den dönen data geldiyse:
+        if (authData && typeof authData === 'object') {
+            const user = authData.user || authData;
+            const token = authData.token;
+
+            if (token) localStorage.setItem('token', token);
+            if (user) {
+                localStorage.setItem('user', JSON.stringify(user));
+                setUser(user);
+            }
+            return authData;
+        }
     };
 
     const logout = async () => {
