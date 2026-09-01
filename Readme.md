@@ -102,5 +102,6 @@ Bu işlem tamamlandığında servisler şu adreslerde çalışıyor olacaktır:
 4. Branch'inize push'layın (`git push origin feature/yeniOzellik`).
 5. Pull Request oluşturun.
 
-## 📄 Lisans
-Bu proje ISC lisansı ile lisanslanmıştır. Daha fazla bilgi için `package.json` dosyasını inceleyebilirsiniz.
+📄 Lisans
+
+Bu proje **CC0 1.0 Universal (Kamu Malı)** lisansı altında sunulmuştur. Daha fazla bilgi için `LICENSE` dosyasına göz atabilirsiniz.
