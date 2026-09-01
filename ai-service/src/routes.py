@@ -6,7 +6,7 @@ import asyncio
 
 # Kendi modüllerimiz
 from .config import OLLAMA_URL, MODEL_NAME
-from .schemas import InternPayload, ChatRequest, DailyArchivePayload, DailySummaryPayload
+from .schemas import InternPayload, ChatRequest, DailyArchivePayload, DailySummaryPayload, TipPayload
 from .prompts import SYSTEM_PROMPT, CHAT_SYSTEM_PROMPT
 from .utils import extract_json_from_text
 

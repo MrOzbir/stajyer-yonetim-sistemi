@@ -72,7 +72,11 @@ exports.generateReport = async (req, res) => {
                         typeof item === 'object' ? `${item.title || 'Kaynak'} - ${item.url || ''}` : String(item)
                     )
                     : [],
-                nextSteps: analysisResult.nextSteps || [],
+                    nextSteps: Array.isArray(analysisResult.nextSteps)
+                    ? analysisResult.nextSteps.map(step => 
+                        typeof step === 'object' ? `${step.title || 'Adım'}: ${step.description || ''}`.trim() : String(step)
+                    )
+                    : [],
                 encouragementQuote: analysisResult.encouragementQuote || 'Harika iş çıkarıyorsun!',
                 rawJson: analysisResult
             }
