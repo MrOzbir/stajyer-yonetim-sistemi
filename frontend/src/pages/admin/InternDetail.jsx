@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../api/axios';
 import { 
     ArrowLeft, Bot, Calendar, CheckCircle2, Clock, 
-    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles, Trash2, Pencil, ListChecks
+    TrendingUp, BookOpen, Award, AlertTriangle, Sparkles, Trash2, Pencil, ListChecks, Building
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -34,6 +34,11 @@ export default function InternDetail() {
     const [isSelectReportsMode, setIsSelectReportsMode] = useState(false);
     const [selectedReports, setSelectedReports] = useState([]);
 
+    // Departman İşlemleri
+    const [departments, setDepartments] = useState([]);
+    const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState(false);
+    const [selectedDepartmentId, setSelectedDepartmentId] = useState('');
+
     // 🗑️ SEÇİLİ GÖREVLERİ TOPLU SİL
     const handleDeleteSelectedTasks = async () => {
         if (selectedTasks.length === 0) return;
@@ -62,6 +67,20 @@ export default function InternDetail() {
             alert("✅ Seçilen raporlar başarıyla silindi.");
         } catch (e) {
             alert("❌ Toplu silme başarısız: " + (e.response?.data?.error || e.message));
+        }
+    };
+
+    const handleChangeDepartment = async (e) => {
+        e.preventDefault();
+        try {
+            await api.patch(`/interns/${id}/department`, { 
+                departmentId: selectedDepartmentId ? parseInt(selectedDepartmentId) : null 
+            });
+            setIsDepartmentModalOpen(false);
+            fetchIntern();
+            alert("✅ Departman başarıyla güncellendi!");
+        } catch (err) {
+            alert("❌ Departman güncellenemedi: " + (err.response?.data?.error || err.message));
         }
     };
 
@@ -132,6 +151,15 @@ export default function InternDetail() {
     // Bileşen yüklendiğinde ve id değiştiğinde çalışır
     useEffect(() => {
         fetchIntern();
+        const fetchDepartments = async () => {
+            try {
+                const res = await api.get('/departments');
+                setDepartments(res.data);
+            } catch (error) {
+                console.error("Departmanlar getirilemedi:", error);
+            }
+        };
+        fetchDepartments();
     }, [id]);
 
     const generateReport = async () => {
@@ -216,38 +244,62 @@ export default function InternDetail() {
                         <h1 className="text-2xl font-bold">
                             {intern.name} {intern.surname}
                         </h1>
-                        <p className="text-snow-faint text-sm">{intern.email}</p>
+                        <div className="flex items-center gap-3 mt-1">
+                            <p className="text-snow-faint text-sm">{intern.email}</p>
+                            {intern.department && (
+                                <span
+                                    className="px-2 py-0.5 rounded text-xs font-medium text-snow whitespace-nowrap"
+                                    style={{ backgroundColor: intern.department.color }}
+                                >
+                                    {intern.department.name}
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                <button
-                    onClick={generateReport}
-                    disabled={generating}
-                    className="btn-brand flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-                >
-                    {generating ? (
+                <div className="flex items-center gap-3">
+                    {user?.role === 'ADMIN' && (
                         <>
-                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            Oluşturuluyor...
-                        </>
-                    ) : (
-                        <>
-                            <Bot size={16} />
-                            Yeni AI Raporu
+                            <button
+                                onClick={() => {
+                                    setSelectedDepartmentId(intern.department?.id || '');
+                                    setIsDepartmentModalOpen(true);
+                                }}
+                                className="bg-panel hover:bg-overlay text-snow px-4 py-2 rounded-lg text-sm font-semibold border border-edge transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+                            >
+                                <Building size={16} />
+                                {intern.department ? 'Departman Değiştir' : 'Departman Ata'}
+                            </button>
+
+                            <button 
+                                onClick={() => setIsTaskModalOpen(true)}
+                                className="bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2 cursor-pointer shadow-sm"
+                            >
+                                + Yeni Görev Ata
+                            </button>
                         </>
                     )}
-                </button>
-            </div>
 
-            {/* 1. EKRANDAKİ BUTON (Başlığın yanına eklenebilir) */}
-            {user?.role === 'ADMIN' && (
-                <button 
-                    onClick={() => setIsTaskModalOpen(true)}
-                    className="bg-brand hover:bg-brand-light text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center gap-2"
-                >
-                    + Yeni Görev Ata
-                </button>
-            )}
+                    <button
+                        onClick={generateReport}
+                        disabled={generating}
+                        className="btn-brand flex items-center gap-2 disabled:opacity-50 cursor-pointer shadow-sm"
+                    >
+                        {generating ? (
+                            <>
+                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                Oluşturuluyor...
+                            </>
+                        ) : (
+                            <>
+                                <Bot size={16} />
+                                Yeni AI Raporu
+                            </>
+                        )}
+                    </button>
+                </div>
+            </div>
 
             {/* 2. GÖREV ATAMA MODALI (Dosyanın en altına, sayfanın ana div'inin hemen içine koyun) */}
             {isTaskModalOpen && (
@@ -818,6 +870,53 @@ function ReportCard({ report, onDelete }) {
                             <p className="text-sm text-snow italic">"{report.encouragementQuote}"</p>
                         </div>
                     )}
+                </div>
+            )}
+            {/* Departman Değiştirme Modalı */}
+            {isDepartmentModalOpen && (
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+                    <div className="bg-panel w-full max-w-sm rounded-xl border border-edge p-6 shadow-2xl">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2 bg-brand/10 rounded-lg text-brand-light">
+                                <Building size={20} />
+                            </div>
+                            <h2 className="text-xl font-bold text-snow">Departman Güncelle</h2>
+                        </div>
+                        
+                        <form onSubmit={handleChangeDepartment} className="space-y-4">
+                            <div>
+                                <label className="block text-snow-muted text-xs font-medium mb-1.5 uppercase tracking-wider">Departman Seçin</label>
+                                <select 
+                                    value={selectedDepartmentId}
+                                    onChange={(e) => setSelectedDepartmentId(e.target.value)}
+                                    className="w-full bg-night border border-edge rounded-lg px-4 py-2.5 text-sm text-snow outline-none focus:border-brand transition-colors appearance-none cursor-pointer"
+                                >
+                                    <option value="">Departman Yok</option>
+                                    {departments.map(dept => (
+                                        <option key={dept.id} value={dept.id}>
+                                            {dept.name}
+                                        </option>
+                                    ))} 
+                                </select>
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button 
+                                    type="button" 
+                                    onClick={() => setIsDepartmentModalOpen(false)}
+                                    className="flex-1 bg-overlay hover:bg-overlay-hover text-snow py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                >
+                                    İptal
+                                </button>
+                                <button 
+                                    type="submit" 
+                                    className="flex-1 bg-brand hover:bg-brand-light text-white py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                                >
+                                    Kaydet
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             )}
         </div>

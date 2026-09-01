@@ -109,3 +109,15 @@ exports.updateNotificationEmail = async (req, res) => {
         res.status(500).json({ error: "Bildirim e-postası kaydedilemedi." });
     }
 };
+
+exports.updateDepartment = async (req, res) => {
+    try {
+        const internId = parseInt(req.params.id);
+        const { departmentId } = req.body;
+        const updated = await internService.updateDepartment(internId, departmentId);
+        res.status(200).json({ message: "Departman güncellendi.", intern: updated });
+    } catch (error) {
+        console.error("🚨 DEPARTMAN GÜNCELLEME HATASI:", error);
+        res.status(500).json({ error: error.message || "Departman güncellenemedi." });
+    }
+};

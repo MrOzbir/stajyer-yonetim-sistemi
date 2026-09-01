@@ -1,22 +1,50 @@
-# Genel ve Sistem Dosyaları
+# Environment Variables (Gizli Kimlik ve Yapılandırma Dosyaları)
 .env
 .env.*
-.DS_Store [cite: 3911]
-**/.DS_Store [cite: 3911]
+*.env
+*.env.*
 
-# Node.js Bağımlılıkları
-node_modules/ [cite: 3488]
-backend-api/node_modules/ [cite: 3488]
-frontend/node_modules/ [cite: 3488]
+# Sistem ve İşletim Sistemi Dosyaları
+.DS_Store
+**/.DS_Store
+Thumbs.db
+
+# Bağımlılıklar (Node.js & Packages)
+node_modules/
+**/node_modules/
+
+# Derleme ve Çıktı Klasörleri (Build & Dist)
+dist/
+**/dist/
+build/
+**/build/
 generated/
 
-# Python ve Sanal Ortamlar
-__pycache__/ [cite: 3488]
-ai-service/venv/ [cite: 3488]
-ai-service/.venv/ [cite: 3488]
+# Log ve Hata Kayıtları
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# AI Assistant ve IDE Dosyaları
-.windsurf/ [cite: 3540]
-.claude/ [cite: 3540]
-.agents/ [cite: 3540]
-skills-lock.json [cite: 3540]
+# Python ve Sanal Ortamlar (AI Service)
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+**/.venv/
+**/venv/
+.pytest_cache/
+
+# IDE, AI Asistanı ve Editör Dosyaları
+.vscode/
+.idea/
+.windsurf/
+.claude/
+.agents/
+skills-lock.json
+*.swp
+*.swo

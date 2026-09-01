@@ -12,6 +12,7 @@ router.get('/:id', authenticateToken, roleMiddleware('ADMIN'), internController.
 router.patch('/:id/archive', authenticateToken, roleMiddleware('ADMIN'), internController.archiveIntern);
 router.delete('/:id', authenticateToken, roleMiddleware('ADMIN'), internController.deleteIntern);
 router.patch('/:id/restore', authenticateToken, roleMiddleware('ADMIN'), internController.restoreIntern);
+router.patch('/:id/department', authenticateToken, roleMiddleware('ADMIN'), internController.updateDepartment);
 router.put('/profile/email', authenticateToken, internController.updateNotificationEmail);
 
 module.exports = router;

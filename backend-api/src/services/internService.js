@@ -160,4 +160,14 @@ exports.deleteIntern = async (internId) => {
     });
 };
 
+exports.updateDepartment = async (internId, departmentId) => {
+    const intern = await prisma.user.findUnique({ where: { id: internId } });
+    if (!intern || intern.role !== 'INTERN') throw new Error("Stajyer bulunamadı.");
+
+    return await prisma.user.update({
+        where: { id: internId },
+        data: { departmentId: departmentId }
+    });
+};
+
 exports.buildInternStats = buildInternStats;
